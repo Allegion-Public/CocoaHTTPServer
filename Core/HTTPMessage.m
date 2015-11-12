@@ -7,19 +7,17 @@
 
 @implementation HTTPMessage
 
-- (id)initEmptyRequest
-{
+- (id)initEmptyRequest {
 	if ((self = [super init]))
-	{
+	 {
 		message = CFHTTPMessageCreateEmpty(NULL, YES);
 	}
 	return self;
 }
 
-- (id)initRequestWithMethod:(NSString *)method URL:(NSURL *)url version:(NSString *)version
-{
+- (id)initRequestWithMethod:(NSString *)method URL:(NSURL *)url version:(NSString *)version {
 	if ((self = [super init]))
-	{
+	 {
 		message = CFHTTPMessageCreateRequest(NULL,
 		                                    (__bridge CFStringRef)method,
 		                                    (__bridge CFURLRef)url,
@@ -28,10 +26,9 @@
 	return self;
 }
 
-- (id)initResponseWithStatusCode:(NSInteger)code description:(NSString *)description version:(NSString *)version
-{
+- (id)initResponseWithStatusCode:(NSInteger)code description:(NSString *)description version:(NSString *)version {
 	if ((self = [super init]))
-	{
+	 {
 		message = CFHTTPMessageCreateResponse(NULL,
 		                                      (CFIndex)code,
 		                                      (__bridge CFStringRef)description,
@@ -40,73 +37,60 @@
 	return self;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
 	if (message)
-	{
+	 {
 		CFRelease(message);
 	}
 }
 
-- (BOOL)appendData:(NSData *)data
-{
+- (BOOL)appendData:(NSData *)data {
 	return CFHTTPMessageAppendBytes(message, [data bytes], [data length]);
 }
 
-- (BOOL)isHeaderComplete
-{
+- (BOOL)isHeaderComplete {
 	return CFHTTPMessageIsHeaderComplete(message);
 }
 
-- (NSString *)version
-{
+- (NSString *)version {
 	return (__bridge_transfer NSString *)CFHTTPMessageCopyVersion(message);
 }
 
-- (NSString *)method
-{
+- (NSString *)method {
 	return (__bridge_transfer NSString *)CFHTTPMessageCopyRequestMethod(message);
 }
 
-- (NSURL *)url
-{
+- (NSURL *)url {
 	return (__bridge_transfer NSURL *)CFHTTPMessageCopyRequestURL(message);
 }
 
-- (NSInteger)statusCode
-{
+- (NSInteger)statusCode {
 	return (NSInteger)CFHTTPMessageGetResponseStatusCode(message);
 }
 
-- (NSDictionary *)allHeaderFields
-{
+- (NSDictionary *)allHeaderFields {
 	return (__bridge_transfer NSDictionary *)CFHTTPMessageCopyAllHeaderFields(message);
 }
 
-- (NSString *)headerField:(NSString *)headerField
-{
+- (NSString *)headerField:(NSString *)headerField {
 	return (__bridge_transfer NSString *)CFHTTPMessageCopyHeaderFieldValue(message, (__bridge CFStringRef)headerField);
 }
 
-- (void)setHeaderField:(NSString *)headerField value:(NSString *)headerFieldValue
-{
+- (void)setHeaderField:(NSString *)headerField value:(NSString *)headerFieldValue {
 	CFHTTPMessageSetHeaderFieldValue(message,
 	                                 (__bridge CFStringRef)headerField,
 	                                 (__bridge CFStringRef)headerFieldValue);
 }
 
-- (NSData *)messageData
-{
+- (NSData *)messageData {
 	return (__bridge_transfer NSData *)CFHTTPMessageCopySerializedMessage(message);
 }
 
-- (NSData *)body
-{
+- (NSData *)body {
 	return (__bridge_transfer NSData *)CFHTTPMessageCopyBody(message);
 }
 
-- (void)setBody:(NSData *)body
-{
+- (void)setBody:(NSData *)body {
 	CFHTTPMessageSetBody(message, (__bridge CFDataRef)body);
 }
 

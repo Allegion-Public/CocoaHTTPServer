@@ -18,8 +18,7 @@
 #endif
 
 
-@interface HTTPServer : NSObject IMPLEMENTED_PROTOCOLS
-{
+@interface HTTPServer : NSObject IMPLEMENTED_PROTOCOLS {
 	// Underlying asynchronous TCP/IP socket
 	GCDAsyncSocket *asyncSocket;
 	

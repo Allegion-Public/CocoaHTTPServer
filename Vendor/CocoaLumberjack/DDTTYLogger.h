@@ -31,8 +31,7 @@
  * you may choose to use only a file logger and a tty logger.
 **/
 
-@interface DDTTYLogger : DDAbstractLogger <DDLogger>
-{
+@interface DDTTYLogger : DDAbstractLogger <DDLogger> {
 	NSCalendar *calendar;
 	NSUInteger calendarUnitFlags;
 	

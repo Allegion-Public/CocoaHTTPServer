@@ -75,8 +75,7 @@ extern NSString *const GCDAsyncSocketSSLDiffieHellmanParameters;
 #endif
 #endif
 
-enum GCDAsyncSocketError
-{
+enum GCDAsyncSocketError {
 	GCDAsyncSocketNoError = 0,           // Never used
 	GCDAsyncSocketBadConfigError,        // Invalid configuration
 	GCDAsyncSocketBadParamError,         // Invalid parameter was passed
@@ -768,7 +767,7 @@ typedef enum GCDAsyncSocketError GCDAsyncSocketError;
  * - (BOOL)socketHasSomething
  * {
  *     __block BOOL result = NO;
- *     dispatch_block_t block = ^{
+ *     dispatch_block_t block = ^ {
  *         result = [self someInternalMethodToBeRunOnlyOnSocketQueue];
  *     }
  *     if (is_executing_on_queue(socketQueue))
@@ -907,7 +906,7 @@ typedef enum GCDAsyncSocketError GCDAsyncSocketError;
  * 
  * - (void)socket:(GCDAsyncSocket *)sock didConnectToHost:(NSString *)host port:(uint16_t)port
  * {
- *     [asyncSocket performBlock:^{
+ *     [asyncSocket performBlock:^ {
  *         [asyncSocket enableBackgroundingOnSocket];
  *     }];
  * }

@@ -38,8 +38,7 @@
  * returns what you want when its description method is invoked.
 **/
 
-@interface HTTPDynamicFileResponse : HTTPAsyncFileResponse
-{
+@interface HTTPDynamicFileResponse : HTTPAsyncFileResponse {
 	NSData *separator;
 	NSDictionary *replacementDict;
 }

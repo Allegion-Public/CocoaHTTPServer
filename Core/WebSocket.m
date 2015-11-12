@@ -36,18 +36,15 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 #define WS_OP_PING                 9
 #define WS_OP_PONG                 10
 
-static inline BOOL WS_OP_IS_FINAL_FRAGMENT(UInt8 frame)
-{
+static inline BOOL WS_OP_IS_FINAL_FRAGMENT(UInt8 frame) {
 	return (frame & 0x80) ? YES : NO;
 }
 
-static inline BOOL WS_PAYLOAD_IS_MASKED(UInt8 frame)
-{
+static inline BOOL WS_PAYLOAD_IS_MASKED(UInt8 frame) {
 	return (frame & 0x80) ? YES : NO;
 }
 
-static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
-{
+static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame) {
 	return frame & 0x7F;
 }
 
@@ -63,16 +60,14 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 #pragma mark -
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-@implementation WebSocket
-{
+@implementation WebSocket {
 	BOOL isRFC6455;
 	BOOL nextFrameMasked;
 	NSUInteger nextOpCode;
 	NSData *maskingKey;
 }
 
-+ (BOOL)isWebSocketRequest:(HTTPMessage *)request
-{
++ (BOOL)isWebSocketRequest:(HTTPMessage *)request {
 	// Request (Draft 75):
 	// 
 	// GET /demo HTTP/1.1
@@ -120,8 +115,7 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 	return isWebSocket;
 }
 
-+ (BOOL)isVersion76Request:(HTTPMessage *)request
-{
++ (BOOL)isVersion76Request:(HTTPMessage *)request {
 	NSString *key1 = [request headerField:@"Sec-WebSocket-Key1"];
 	NSString *key2 = [request headerField:@"Sec-WebSocket-Key2"];
 	
@@ -139,8 +133,7 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 	return isVersion76;
 }
 
-+ (BOOL)isRFC6455Request:(HTTPMessage *)request
-{
++ (BOOL)isRFC6455Request:(HTTPMessage *)request {
 	NSString *key = [request headerField:@"Sec-WebSocket-Key"];
 	BOOL isRFC6455 = (key != nil);
 
@@ -155,19 +148,18 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 
 @synthesize websocketQueue;
 
-- (id)initWithRequest:(HTTPMessage *)aRequest socket:(GCDAsyncSocket *)socket
-{
+- (id)initWithRequest:(HTTPMessage *)aRequest socket:(GCDAsyncSocket *)socket {
 	HTTPLogTrace();
 	
 	if (aRequest == nil)
-	{
+	 {
 		return nil;
 	}
 	
 	if ((self = [super init]))
-	{
+	 {
 		if (HTTP_LOG_VERBOSE)
-		{
+		 {
 			NSData *requestHeaders = [aRequest messageData];
 			
 			NSString *temp = [[NSString alloc] initWithData:requestHeaders encoding:NSUTF8StringEncoding];
@@ -189,8 +181,7 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 	return self;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
 	HTTPLogTrace();
 	
 	#if !OS_OBJECT_USE_OBJC
@@ -201,20 +192,18 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 	[asyncSocket disconnect];
 }
 
-- (id)delegate
-{
+- (id)delegate {
 	__block id result = nil;
 	
-	dispatch_sync(websocketQueue, ^{
+	dispatch_sync(websocketQueue, ^ {
 		result = delegate;
 	});
 	
 	return result;
 }
 
-- (void)setDelegate:(id)newDelegate
-{
-	dispatch_async(websocketQueue, ^{
+- (void)setDelegate:(id)newDelegate {
+	dispatch_async(websocketQueue, ^ {
 		delegate = newDelegate;
 	});
 }
@@ -227,22 +216,21 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
  * Starting point for the WebSocket after it has been fully initialized (including subclasses).
  * This method is called by the HTTPConnection it is spawned from.
 **/
-- (void)start
-{
+- (void)start {
 	// This method is not exactly designed to be overriden.
 	// Subclasses are encouraged to override the didOpen method instead.
 	
-	dispatch_async(websocketQueue, ^{ @autoreleasepool {
+	dispatch_async(websocketQueue, ^ { @autoreleasepool {
 		
 		if (isStarted) return;
 		isStarted = YES;
 		
 		if (isVersion76)
-		{
+		 {
 			[self readRequestBody];
 		}
 		else
-		{
+		 {
 			[self sendResponseHeaders];
 			[self didOpen];
 		}
@@ -253,12 +241,11 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
  * This method is called by the HTTPServer if it is asked to stop.
  * The server, in turn, invokes stop on each WebSocket instance.
 **/
-- (void)stop
-{
+- (void)stop {
 	// This method is not exactly designed to be overriden.
 	// Subclasses are encouraged to override the didClose method instead.
 	
-	dispatch_async(websocketQueue, ^{ @autoreleasepool {
+	dispatch_async(websocketQueue, ^ { @autoreleasepool {
 		
 		[asyncSocket disconnect];
 	}});
@@ -268,8 +255,7 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 #pragma mark HTTP Response
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-- (void)readRequestBody
-{
+- (void)readRequestBody {
 	HTTPLogTrace();
 	
 	NSAssert(isVersion76, @"WebSocket version 75 doesn't contain a request body");
@@ -277,26 +263,24 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 	[asyncSocket readDataToLength:8 withTimeout:TIMEOUT_NONE tag:TAG_HTTP_REQUEST_BODY];
 }
 
-- (NSString *)originResponseHeaderValue
-{
+- (NSString *)originResponseHeaderValue {
 	HTTPLogTrace();
 	
 	NSString *origin = [request headerField:@"Origin"];
 	
 	if (origin == nil)
-	{
+	 {
 		NSString *port = [NSString stringWithFormat:@"%hu", [asyncSocket localPort]];
 		
 		return [NSString stringWithFormat:@"http://localhost:%@", port];
 	}
 	else
-	{
+	 {
 		return origin;
 	}
 }
 
-- (NSString *)locationResponseHeaderValue
-{
+- (NSString *)locationResponseHeaderValue {
 	HTTPLogTrace();
 	
 	NSString *location;
@@ -307,13 +291,13 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 	NSString *requestUri = [[request url] relativeString];
 	
 	if (host == nil)
-	{
+	 {
 		NSString *port = [NSString stringWithFormat:@"%hu", [asyncSocket localPort]];
 		
 		location = [NSString stringWithFormat:@"%@://localhost:%@%@", scheme, port, requestUri];
 	}
 	else
-	{
+	 {
 		location = [NSString stringWithFormat:@"%@://%@%@", scheme, host, requestUri];
 	}
 	
@@ -326,8 +310,7 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 	return [[key stringByAppendingString: guid] dataUsingEncoding: NSUTF8StringEncoding].sha1Digest.base64Encoded;
 }
 
-- (void)sendResponseHeaders
-{
+- (void)sendResponseHeaders {
 	HTTPLogTrace();
 	
 	// Request (Draft 75):
@@ -410,7 +393,7 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 	
 	
 	if (HTTP_LOG_VERBOSE)
-	{
+	 {
 		NSString *temp = [[NSString alloc] initWithData:responseHeaders encoding:NSUTF8StringEncoding];
 		HTTPLogVerbose(@"%@[%p] Response Headers:\n%@", THIS_FILE, self, temp);
 	}
@@ -418,8 +401,7 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 	[asyncSocket writeData:responseHeaders withTimeout:TIMEOUT_NONE tag:TAG_HTTP_RESPONSE_HEADERS];
 }
 
-- (NSData *)processKey:(NSString *)key
-{
+- (NSData *)processKey:(NSString *)key {
 	HTTPLogTrace();
 	
 	unichar c;
@@ -433,15 +415,15 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 	long long numSpaces = 0;
 	
 	for (i = 0; i < length; i++)
-	{
+	 {
 		c = [key characterAtIndex:i];
 		
 		if (c >= '0' && c <= '9')
-		{
+		 {
 			[numStr appendFormat:@"%C", c];
 		}
 		else if (c == ' ')
-		{
+		 {
 			numSpaces++;
 		}
 	}
@@ -465,8 +447,7 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 	return [NSData dataWithBytes:&result length:4];
 }
 
-- (void)sendResponseBody:(NSData *)d3
-{
+- (void)sendResponseBody:(NSData *)d3 {
 	HTTPLogTrace();
 	
 	NSAssert(isVersion76, @"WebSocket version 75 doesn't contain a response body");
@@ -492,7 +473,7 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 	[asyncSocket writeData:responseBody withTimeout:TIMEOUT_NONE tag:TAG_HTTP_RESPONSE_BODY];
 	
 	if (HTTP_LOG_VERBOSE)
-	{
+	 {
 		NSString *s1 = [[NSString alloc] initWithData:d1 encoding:NSASCIIStringEncoding];
 		NSString *s2 = [[NSString alloc] initWithData:d2 encoding:NSASCIIStringEncoding];
 		NSString *s3 = [[NSString alloc] initWithData:d3 encoding:NSASCIIStringEncoding];
@@ -514,8 +495,7 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 #pragma mark Core Functionality
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-- (void)didOpen
-{
+- (void)didOpen {
 	HTTPLogTrace();
 	
 	// Override me to perform any custom actions once the WebSocket has been opened.
@@ -528,28 +508,26 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 	
 	// Notify delegate
 	if ([delegate respondsToSelector:@selector(webSocketDidOpen:)])
-	{
+	 {
 		[delegate webSocketDidOpen:self];
 	}
 }
 
-- (void)sendMessage:(NSString *)msg
-{	
+- (void)sendMessage:(NSString *)msg {	
 	NSData *msgData = [msg dataUsingEncoding:NSUTF8StringEncoding];
 	[self sendData:msgData];
 }
 
-- (void)sendData:(NSData *)msgData
-{
+- (void)sendData:(NSData *)msgData {
     HTTPLogTrace();
     
     NSMutableData *data = nil;
 	
 	if (isRFC6455)
-	{
+	 {
 		NSUInteger length = msgData.length;
 		if (length <= 125)
-		{
+		 {
 			data = [NSMutableData dataWithCapacity:(length + 2)];
 			[data appendBytes: "\x81" length:1];
 			UInt8 len = (UInt8)length;
@@ -557,23 +535,23 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 			[data appendData:msgData];
 		}
 		else if (length <= 0xFFFF)
-		{
+		 {
 			data = [NSMutableData dataWithCapacity:(length + 4)];
 			[data appendBytes: "\x81\x7E" length:2];
 			UInt16 len = (UInt16)length;
-			[data appendBytes: (UInt8[]){len >> 8, len & 0xFF} length:2];
+			[data appendBytes: (UInt8[]) {len >> 8, len & 0xFF} length:2];
 			[data appendData:msgData];
 		}
 		else
-		{
+		 {
 			data = [NSMutableData dataWithCapacity:(length + 10)];
 			[data appendBytes: "\x81\x7F" length:2];
-			[data appendBytes: (UInt8[]){0, 0, 0, 0, (UInt8)(length >> 24), (UInt8)(length >> 16), (UInt8)(length >> 8), length & 0xFF} length:8];
+			[data appendBytes: (UInt8[]) {0, 0, 0, 0, (UInt8)(length >> 24), (UInt8)(length >> 16), (UInt8)(length >> 8), length & 0xFF} length:8];
 			[data appendData:msgData];
 		}
 	}
 	else
-	{
+	 {
 		data = [NSMutableData dataWithCapacity:([msgData length] + 2)];
         
 		[data appendBytes:"\x00" length:1];
@@ -586,8 +564,7 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 	[asyncSocket writeData:data withTimeout:TIMEOUT_NONE tag:0];
 }
 
-- (void)didReceiveMessage:(NSString *)msg
-{
+- (void)didReceiveMessage:(NSString *)msg {
 	HTTPLogTrace();
 	
 	// Override me to process incoming messages.
@@ -597,13 +574,12 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 	
 	// Notify delegate
 	if ([delegate respondsToSelector:@selector(webSocket:didReceiveMessage:)])
-	{
+	 {
 		[delegate webSocket:self didReceiveMessage:msg];
 	}
 }
 
-- (void)didClose
-{
+- (void)didClose {
 	HTTPLogTrace();
 	
 	// Override me to perform any cleanup when the socket is closed
@@ -613,7 +589,7 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 	
 	// Notify delegate
 	if ([delegate respondsToSelector:@selector(webSocketDidClose:)])
-	{
+	 {
 		[delegate webSocketDidClose:self];
 	}
 	
@@ -623,12 +599,11 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 
 #pragma mark WebSocket Frame
 
-- (BOOL)isValidWebSocketFrame:(UInt8)frame
-{
+- (BOOL)isValidWebSocketFrame:(UInt8)frame {
 	NSUInteger rsv =  frame & 0x70;
 	NSUInteger opcode = frame & 0x0F;
 	if (rsv || (3 <= opcode && opcode <= 7) || (0xB <= opcode && opcode <= 0xF))
-	{
+	 {
 		return NO;
 	}
 	return YES;
@@ -657,73 +632,72 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 // |                     Payload Data continued ...                |
 // +---------------------------------------------------------------+
 
-- (void)socket:(GCDAsyncSocket *)sock didReadData:(NSData *)data withTag:(long)tag
-{
+- (void)socket:(GCDAsyncSocket *)sock didReadData:(NSData *)data withTag:(long)tag {
 	HTTPLogTrace();
 	
 	if (tag == TAG_HTTP_REQUEST_BODY)
-	{
+	 {
 		[self sendResponseHeaders];
 		[self sendResponseBody:data];
 		[self didOpen];
 	}
 	else if (tag == TAG_PREFIX)
-	{
+	 {
 		UInt8 *pFrame = (UInt8 *)[data bytes];
 		UInt8 frame = *pFrame;
 		
 		if (frame <= 0x7F)
-		{
+		 {
 			[asyncSocket readDataToData:term withTimeout:TIMEOUT_NONE tag:TAG_MSG_PLUS_SUFFIX];
 		}
 		else
-		{
+		 {
 			// Unsupported frame type
 			[self didClose];
 		}
 	}
 	else if (tag == TAG_PAYLOAD_PREFIX)
-	{
+	 {
 		UInt8 *pFrame = (UInt8 *)[data bytes];
 		UInt8 frame = *pFrame;
 
 		if ([self isValidWebSocketFrame: frame])
-		{
+		 {
 			nextOpCode = (frame & 0x0F);
 			[asyncSocket readDataToLength:1 withTimeout:TIMEOUT_NONE tag:TAG_PAYLOAD_LENGTH];
 		}
 		else
-		{
+		 {
 			// Unsupported frame type
 			[self didClose];
 		}
 	}
 	else if (tag == TAG_PAYLOAD_LENGTH)
-	{
+	 {
 		UInt8 frame = *(UInt8 *)[data bytes];
 		BOOL masked = WS_PAYLOAD_IS_MASKED(frame);
 		NSUInteger length = WS_PAYLOAD_LENGTH(frame);
 		nextFrameMasked = masked;
 		maskingKey = nil;
 		if (length <= 125)
-		{
+		 {
 			if (nextFrameMasked)
-			{
+			 {
 				[asyncSocket readDataToLength:4 withTimeout:TIMEOUT_NONE tag:TAG_MSG_MASKING_KEY];
 			}
 			[asyncSocket readDataToLength:length withTimeout:TIMEOUT_NONE tag:TAG_MSG_WITH_LENGTH];
 		}
 		else if (length == 126)
-		{
+		 {
 			[asyncSocket readDataToLength:2 withTimeout:TIMEOUT_NONE tag:TAG_PAYLOAD_LENGTH16];
 		}
 		else
-		{
+		 {
 			[asyncSocket readDataToLength:8 withTimeout:TIMEOUT_NONE tag:TAG_PAYLOAD_LENGTH64];
 		}
 	}
 	else if (tag == TAG_PAYLOAD_LENGTH16)
-	{
+	 {
 		UInt8 *pFrame = (UInt8 *)[data bytes];
 		NSUInteger length = ((NSUInteger)pFrame[0] << 8) | (NSUInteger)pFrame[1];
 		if (nextFrameMasked) {
@@ -732,30 +706,30 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 		[asyncSocket readDataToLength:length withTimeout:TIMEOUT_NONE tag:TAG_MSG_WITH_LENGTH];
 	}
 	else if (tag == TAG_PAYLOAD_LENGTH64)
-	{
+	 {
 		// FIXME: 64bit data size in memory?
 		[self didClose];
 	}
 	else if (tag == TAG_MSG_WITH_LENGTH)
-	{
+	 {
 		NSUInteger msgLength = [data length];
 		if (nextFrameMasked && maskingKey) {
 			NSMutableData *masked = data.mutableCopy;
 			UInt8 *pData = (UInt8 *)masked.mutableBytes;
 			UInt8 *pMask = (UInt8 *)maskingKey.bytes;
 			for (NSUInteger i = 0; i < msgLength; i++)
-			{
+			 {
 				pData[i] = pData[i] ^ pMask[i % 4];
 			}
 			data = masked;
 		}
 		if (nextOpCode == WS_OP_TEXT_FRAME)
-		{
+		 {
 			NSString *msg = [[NSString alloc] initWithBytes:[data bytes] length:msgLength encoding:NSUTF8StringEncoding];
 			[self didReceiveMessage:msg];
 		}
 		else
-		{
+		 {
 			[self didClose];
 			return;
 		}
@@ -764,11 +738,11 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 		[asyncSocket readDataToLength:1 withTimeout:TIMEOUT_NONE tag:TAG_PAYLOAD_PREFIX];
 	}
 	else if (tag == TAG_MSG_MASKING_KEY)
-	{
+	 {
 		maskingKey = data.copy;
 	}
 	else
-	{
+	 {
 		NSUInteger msgLength = [data length] - 1; // Excluding ending 0xFF frame
 		
 		NSString *msg = [[NSString alloc] initWithBytes:[data bytes] length:msgLength encoding:NSUTF8StringEncoding];
@@ -781,8 +755,7 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 	}
 }
 
-- (void)socketDidDisconnect:(GCDAsyncSocket *)sock withError:(NSError *)error
-{
+- (void)socketDidDisconnect:(GCDAsyncSocket *)sock withError:(NSError *)error {
 	HTTPLogTrace2(@"%@[%p]: socketDidDisconnect:withError: %@", THIS_FILE, self, error);
 	
 	[self didClose];

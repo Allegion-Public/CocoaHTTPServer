@@ -30,43 +30,36 @@
 #pragma mark -
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-@implementation ContextWhitelistFilterLogFormatter
-{
+@implementation ContextWhitelistFilterLogFormatter {
 	LoggingContextSet *contextSet;
 }
 
-- (id)init
-{
+- (id)init {
 	if ((self = [super init]))
-	{
+	 {
 		contextSet = [[LoggingContextSet alloc] init];
 	}
 	return self;
 }
 
 
-- (void)addToWhitelist:(int)loggingContext
-{
+- (void)addToWhitelist:(int)loggingContext {
 	[contextSet addToSet:loggingContext];
 }
 
-- (void)removeFromWhitelist:(int)loggingContext
-{
+- (void)removeFromWhitelist:(int)loggingContext {
 	[contextSet removeFromSet:loggingContext];
 }
 
-- (NSArray *)whitelist
-{
+- (NSArray *)whitelist {
 	return [contextSet currentSet];
 }
 
-- (BOOL)isOnWhitelist:(int)loggingContext
-{
+- (BOOL)isOnWhitelist:(int)loggingContext {
 	return [contextSet isInSet:loggingContext];
 }
 
-- (NSString *)formatLogMessage:(DDLogMessage *)logMessage
-{
+- (NSString *)formatLogMessage:(DDLogMessage *)logMessage {
 	if ([self isOnWhitelist:logMessage->logContext])
 		return logMessage->logMsg;
 	else
@@ -79,43 +72,36 @@
 #pragma mark -
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-@implementation ContextBlacklistFilterLogFormatter
-{
+@implementation ContextBlacklistFilterLogFormatter {
 	LoggingContextSet *contextSet;
 }
 
-- (id)init
-{
+- (id)init {
 	if ((self = [super init]))
-	{
+	 {
 		contextSet = [[LoggingContextSet alloc] init];
 	}
 	return self;
 }
 
 
-- (void)addToBlacklist:(int)loggingContext
-{
+- (void)addToBlacklist:(int)loggingContext {
 	[contextSet addToSet:loggingContext];
 }
 
-- (void)removeFromBlacklist:(int)loggingContext
-{
+- (void)removeFromBlacklist:(int)loggingContext {
 	[contextSet removeFromSet:loggingContext];
 }
 
-- (NSArray *)blacklist
-{
+- (NSArray *)blacklist {
 	return [contextSet currentSet];
 }
 
-- (BOOL)isOnBlacklist:(int)loggingContext
-{
+- (BOOL)isOnBlacklist:(int)loggingContext {
 	return [contextSet isInSet:loggingContext];
 }
 
-- (NSString *)formatLogMessage:(DDLogMessage *)logMessage
-{
+- (NSString *)formatLogMessage:(DDLogMessage *)logMessage {
 	if ([self isOnBlacklist:logMessage->logContext])
 		return nil;
 	else
@@ -128,46 +114,41 @@
 #pragma mark -
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-@implementation LoggingContextSet
-{
+@implementation LoggingContextSet {
 	OSSpinLock lock;
 	NSMutableSet *set;
 }
 
-- (id)init
-{
+- (id)init {
 	if ((self = [super init]))
-	{
+	 {
 		set = [[NSMutableSet alloc] init];
 	}
 	return self;
 }
 
 
-- (void)addToSet:(int)loggingContext
-{
+- (void)addToSet:(int)loggingContext {
 	OSSpinLockLock(&lock);
-	{
+	 {
 		[set addObject:@(loggingContext)];
 	}
 	OSSpinLockUnlock(&lock);
 }
 
-- (void)removeFromSet:(int)loggingContext
-{
+- (void)removeFromSet:(int)loggingContext {
 	OSSpinLockLock(&lock);
-	{
+	 {
 		[set removeObject:@(loggingContext)];
 	}
 	OSSpinLockUnlock(&lock);
 }
 
-- (NSArray *)currentSet
-{
+- (NSArray *)currentSet {
 	NSArray *result = nil;
 	
 	OSSpinLockLock(&lock);
-	{
+	 {
 		result = [set allObjects];
 	}
 	OSSpinLockUnlock(&lock);
@@ -175,12 +156,11 @@
 	return result;
 }
 
-- (BOOL)isInSet:(int)loggingContext
-{
+- (BOOL)isInSet:(int)loggingContext {
 	BOOL result = NO;
 	
 	OSSpinLockLock(&lock);
-	{
+	 {
 		result = [set containsObject:@(loggingContext)];
 	}
 	OSSpinLockUnlock(&lock);

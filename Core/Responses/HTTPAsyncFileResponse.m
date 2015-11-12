@@ -34,10 +34,9 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 
 @implementation HTTPAsyncFileResponse
 
-- (id)initWithFilePath:(NSString *)fpath forConnection:(HTTPConnection *)parent
-{
+- (id)initWithFilePath:(NSString *)fpath forConnection:(HTTPConnection *)parent {
 	if ((self = [super init]))
-	{
+	 {
 		HTTPLogTrace();
 		
 		connection = parent; // Parents retain children, children do NOT retain parents
@@ -45,7 +44,7 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 		fileFD = NULL_FD;
 		filePath = [fpath copy];
 		if (filePath == nil)
-		{
+		 {
 			HTTPLogWarn(@"%@: Init failed - Nil filePath", THIS_FILE);
 			
 			return nil;
@@ -53,7 +52,7 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 		
 		NSDictionary *fileAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:filePath error:NULL];
 		if (fileAttributes == nil)
-		{
+		 {
 			HTTPLogWarn(@"%@: Init failed - Unable to get file attributes. filePath: %@", THIS_FILE, filePath);
 			
 			return nil;
@@ -70,16 +69,14 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	return self;
 }
 
-- (void)abort
-{
+- (void)abort {
 	HTTPLogTrace();
 	
 	[connection responseDidAbort:self];
 	aborted = YES;
 }
 
-- (void)processReadBuffer
-{
+- (void)processReadBuffer {
 	// This method is here to allow superclasses to perform post-processing of the data.
 	// For an example, see the HTTPDynamicFileResponse class.
 	// 
@@ -97,10 +94,9 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	[connection responseHasAvailableData:self];
 }
 
-- (void)pauseReadSource
-{
+- (void)pauseReadSource {
 	if (!readSourceSuspended)
-	{
+	 {
 		HTTPLogVerbose(@"%@[%p]: Suspending readSource", THIS_FILE, self);
 		
 		readSourceSuspended = YES;
@@ -108,10 +104,9 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	}
 }
 
-- (void)resumeReadSource
-{
+- (void)resumeReadSource {
 	if (readSourceSuspended)
-	{
+	 {
 		HTTPLogVerbose(@"%@[%p]: Resuming readSource", THIS_FILE, self);
 		
 		readSourceSuspended = NO;
@@ -119,8 +114,7 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	}
 }
 
-- (void)cancelReadSource
-{
+- (void)cancelReadSource {
 	HTTPLogVerbose(@"%@[%p]: Canceling readSource", THIS_FILE, self);
 	
 	dispatch_source_cancel(readSource);
@@ -129,19 +123,18 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	// invoke the cancel handler if the dispatch source is paused.
 	
 	if (readSourceSuspended)
-	{
+	 {
 		readSourceSuspended = NO;
 		dispatch_resume(readSource);
 	}
 }
 
-- (BOOL)openFileAndSetupReadSource
-{
+- (BOOL)openFileAndSetupReadSource {
 	HTTPLogTrace();
 	
 	fileFD = open([filePath UTF8String], (O_RDONLY | O_NONBLOCK));
 	if (fileFD == NULL_FD)
-	{
+	 {
 		HTTPLogError(@"%@: Unable to open file. filePath: %@", THIS_FILE, filePath);
 		
 		return NO;
@@ -153,7 +146,7 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	readSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ, fileFD, 0, readQueue);
 	
 	
-	dispatch_source_set_event_handler(readSource, ^{
+	dispatch_source_set_event_handler(readSource, ^ {
 		
 		HTTPLogTrace2(@"%@: eventBlock - fd[%i]", THIS_FILE, fileFD);
 		
@@ -182,12 +175,12 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 		// Do not over-allocate.
 		
 		if (readBuffer == NULL || bytesToRead > (readBufferSize - readBufferOffset))
-		{
+		 {
 			readBufferSize = bytesToRead;
 			readBuffer = reallocf(readBuffer, (size_t)bytesToRead);
 			
 			if (readBuffer == NULL)
-			{
+			 {
 				HTTPLogError(@"%@[%p]: Unable to allocate buffer", THIS_FILE, self);
 				
 				[self pauseReadSource];
@@ -205,21 +198,21 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 		
 		// Check the results
 		if (result < 0)
-		{
+		 {
 			HTTPLogError(@"%@: Error(%i) reading file(%@)", THIS_FILE, errno, filePath);
 			
 			[self pauseReadSource];
 			[self abort];
 		}
 		else if (result == 0)
-		{
+		 {
 			HTTPLogError(@"%@: Read EOF on file(%@)", THIS_FILE, filePath);
 			
 			[self pauseReadSource];
 			[self abort];
 		}
 		else // (result > 0)
-		{
+		 {
 			HTTPLogVerbose(@"%@[%p]: Read %lu bytes from file", THIS_FILE, self, (unsigned long)result);
 			
 			readOffset += result;
@@ -236,7 +229,7 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	dispatch_source_t theReadSource = readSource;
 	#endif
 	
-	dispatch_source_set_cancel_handler(readSource, ^{
+	dispatch_source_set_cancel_handler(readSource, ^ {
 		
 		// Do not access self from within this block in any way, shape or form.
 		// 
@@ -255,10 +248,9 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	return YES;
 }
 
-- (BOOL)openFileIfNeeded
-{
+- (BOOL)openFileIfNeeded {
 	if (aborted)
-	{
+	 {
 		// The file operation has been aborted.
 		// This could be because we failed to open the file,
 		// or the reading process failed.
@@ -266,7 +258,7 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	}
 	
 	if (fileFD != NULL_FD)
-	{
+	 {
 		// File has already been opened.
 		return YES;
 	}
@@ -274,26 +266,23 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	return [self openFileAndSetupReadSource];
 }	
 
-- (UInt64)contentLength
-{
+- (UInt64)contentLength {
 	HTTPLogTrace2(@"%@[%p]: contentLength - %llu", THIS_FILE, self, fileLength);
 	
 	return fileLength;
 }
 
-- (UInt64)offset
-{
+- (UInt64)offset {
 	HTTPLogTrace();
 	
 	return fileOffset;
 }
 
-- (void)setOffset:(UInt64)offset
-{
+- (void)setOffset:(UInt64)offset {
 	HTTPLogTrace2(@"%@[%p]: setOffset:%llu", THIS_FILE, self, offset);
 	
 	if (![self openFileIfNeeded])
-	{
+	 {
 		// File opening failed,
 		// or response has been aborted due to another error.
 		return;
@@ -304,19 +293,18 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	
 	off_t result = lseek(fileFD, (off_t)offset, SEEK_SET);
 	if (result == -1)
-	{
+	 {
 		HTTPLogError(@"%@[%p]: lseek failed - errno(%i) filePath(%@)", THIS_FILE, self, errno, filePath);
 		
 		[self abort];
 	}
 }
 
-- (NSData *)readDataOfLength:(NSUInteger)length
-{
+- (NSData *)readDataOfLength:(NSUInteger)length {
 	HTTPLogTrace2(@"%@[%p]: readDataOfLength:%lu", THIS_FILE, self, (unsigned long)length);
 	
 	if (data)
-	{
+	 {
 		NSUInteger dataLength = [data length];
 		
 		HTTPLogVerbose(@"%@[%p]: Returning data of length %lu", THIS_FILE, self, (unsigned long)dataLength);
@@ -329,15 +317,15 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 		return result;
 	}
 	else
-	{
+	 {
 		if (![self openFileIfNeeded])
-		{
+		 {
 			// File opening failed,
 			// or response has been aborted due to another error.
 			return nil;
 		}
 		
-		dispatch_sync(readQueue, ^{
+		dispatch_sync(readQueue, ^ {
 			
 			NSAssert(readSourceSuspended, @"Invalid logic - perhaps HTTPConnection has changed.");
 			
@@ -349,8 +337,7 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	}
 }
 
-- (BOOL)isDone
-{
+- (BOOL)isDone {
 	BOOL result = (fileOffset == fileLength);
 	
 	HTTPLogTrace2(@"%@[%p]: isDone - %@", THIS_FILE, self, (result ? @"YES" : @"NO"));
@@ -358,25 +345,22 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	return result;
 }
 
-- (NSString *)filePath
-{
+- (NSString *)filePath {
 	return filePath;
 }
 
-- (BOOL)isAsynchronous
-{
+- (BOOL)isAsynchronous {
 	HTTPLogTrace();
 	
 	return YES;
 }
 
-- (void)connectionDidClose
-{
+- (void)connectionDidClose {
 	HTTPLogTrace();
 	
 	if (fileFD != NULL_FD)
-	{
-		dispatch_sync(readQueue, ^{
+	 {
+		dispatch_sync(readQueue, ^ {
 			
 			// Prevent any further calls to the connection
 			connection = nil;
@@ -390,8 +374,7 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	}
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
 	HTTPLogTrace();
 	
 	#if !OS_OBJECT_USE_OBJC

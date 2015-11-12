@@ -29,31 +29,28 @@ static DDASLLogger *sharedInstance;
  *
  * This method may also be called directly (assumably by accident), hence the safety mechanism.
 **/
-+ (void)initialize
-{
++ (void)initialize {
 	static BOOL initialized = NO;
 	if (!initialized)
-	{
+	 {
 		initialized = YES;
 		
 		sharedInstance = [[DDASLLogger alloc] init];
 	}
 }
 
-+ (DDASLLogger *)sharedInstance
-{
++ (DDASLLogger *)sharedInstance {
 	return sharedInstance;
 }
 
-- (id)init
-{
+- (id)init {
 	if (sharedInstance != nil)
-	{
+	 {
 		return nil;
 	}
 	
 	if ((self = [super init]))
-	{
+	 {
 		// A default asl client is provided for the main thread,
 		// but background threads need to create their own client.
 		
@@ -62,22 +59,21 @@ static DDASLLogger *sharedInstance;
 	return self;
 }
 
-- (void)logMessage:(DDLogMessage *)logMessage
-{
+- (void)logMessage:(DDLogMessage *)logMessage {
 	NSString *logMsg = logMessage->logMsg;
 	
 	if (formatter)
-	{
+	 {
 		logMsg = [formatter formatLogMessage:logMessage];
 	}
 	
 	if (logMsg)
-	{
+	 {
 		const char *msg = [logMsg UTF8String];
 		
 		int aslLogLevel;
 		switch (logMessage->logFlag)
-		{
+		 {
 			// Note: By default ASL will filter anything above level 5 (Notice).
 			// So our mappings shouldn't go above that level.
 			
@@ -91,8 +87,7 @@ static DDASLLogger *sharedInstance;
 	}
 }
 
-- (NSString *)loggerName
-{
+- (NSString *)loggerName {
 	return @"cocoa.lumberjack.aslLogger";
 }
 

@@ -8,8 +8,7 @@
 @class HTTPMessage;
 
 
-@interface HTTPAuthenticationRequest : NSObject
-{
+@interface HTTPAuthenticationRequest : NSObject {
 	BOOL isBasic;
 	BOOL isDigest;
 	
@@ -24,6 +23,7 @@
 	NSString *cnonce;
 	NSString *response;
 }
+
 - (id)initWithRequest:(HTTPMessage *)request;
 
 - (BOOL)isBasic;

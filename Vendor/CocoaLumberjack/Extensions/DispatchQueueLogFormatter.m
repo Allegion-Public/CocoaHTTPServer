@@ -16,8 +16,7 @@
 #endif
 
 
-@implementation DispatchQueueLogFormatter
-{
+@implementation DispatchQueueLogFormatter {
 	int32_t atomicLoggerCount;
 	NSDateFormatter *threadUnsafeDateFormatter; // Use [self stringFromDate]
 	
@@ -28,10 +27,9 @@
 	NSMutableDictionary *_replacements;   // _prefix == Only access from within spinlock
 }
 
-- (id)init
-{
+- (id)init {
 	if ((self = [super init]))
-	{
+	 {
 		dateFormatString = @"yyyy-MM-dd HH:mm:ss:SSS";
 		
 		atomicLoggerCount = 0;
@@ -56,12 +54,11 @@
 @synthesize minQueueLength = _minQueueLength;
 @synthesize maxQueueLength = _maxQueueLength;
 
-- (NSString *)replacementStringForQueueLabel:(NSString *)longLabel
-{
+- (NSString *)replacementStringForQueueLabel:(NSString *)longLabel {
 	NSString *result = nil;
 	
 	OSSpinLockLock(&lock);
-	{
+	 {
 		result = [_replacements objectForKey:longLabel];
 	}
 	OSSpinLockUnlock(&lock);
@@ -69,10 +66,9 @@
 	return result;
 }
 
-- (void)setReplacementString:(NSString *)shortLabel forQueueLabel:(NSString *)longLabel
-{
+- (void)setReplacementString:(NSString *)shortLabel forQueueLabel:(NSString *)longLabel {
 	OSSpinLockLock(&lock);
-	{
+	 {
 		if (shortLabel)
 			[_replacements setObject:shortLabel forKey:longLabel];
 		else
@@ -85,16 +81,15 @@
 #pragma mark DDLogFormatter
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-- (NSString *)stringFromDate:(NSDate *)date
-{
+- (NSString *)stringFromDate:(NSDate *)date {
 	int32_t loggerCount = OSAtomicAdd32(0, &atomicLoggerCount);
 	
 	if (loggerCount <= 1)
-	{
+	 {
 		// Single-threaded mode.
 		
 		if (threadUnsafeDateFormatter == nil)
-		{
+		 {
 			threadUnsafeDateFormatter = [[NSDateFormatter alloc] init];
 			[threadUnsafeDateFormatter setFormatterBehavior:NSDateFormatterBehavior10_4];
 			[threadUnsafeDateFormatter setDateFormat:dateFormatString];
@@ -103,7 +98,7 @@
 		return [threadUnsafeDateFormatter stringFromDate:date];
 	}
 	else
-	{
+	 {
 		// Multi-threaded mode.
 		// NSDateFormatter is NOT thread-safe.
 		
@@ -113,7 +108,7 @@
 		NSDateFormatter *dateFormatter = [threadDictionary objectForKey:key];
 		
 		if (dateFormatter == nil)
-		{
+		 {
 			dateFormatter = [[NSDateFormatter alloc] init];
 			[dateFormatter setFormatterBehavior:NSDateFormatterBehavior10_4];
 			[dateFormatter setDateFormat:dateFormatString];
@@ -125,8 +120,7 @@
 	}
 }
 
-- (NSString *)queueThreadLabelForLogMessage:(DDLogMessage *)logMessage
-{
+- (NSString *)queueThreadLabelForLogMessage:(DDLogMessage *)logMessage {
 	// As per the DDLogFormatter contract, this method is always invoked on the same thread/dispatch_queue
 	
 	NSUInteger minQueueLength = self.minQueueLength;
@@ -140,7 +134,7 @@
 	BOOL useThreadName = NO;
 	
 	if (logMessage->queueLabel)
-	{
+	 {
 		// If you manually create a thread, it's dispatch_queue will have one of the thread names below.
 		// Since all such threads have the same name, we'd prefer to use the threadName or the machThreadID.
 		
@@ -155,9 +149,9 @@
 		
 		int i;
 		for (i = 0; i < length; i++)
-		{
+		 {
 			if (strcmp(logMessage->queueLabel, names[i]) == 0)
-			{
+			 {
 				useQueueLabel = NO;
 				useThreadName = [logMessage->threadName length] > 0;
 				break;
@@ -165,13 +159,13 @@
 		}
 	}
 	else
-	{
+	 {
 		useQueueLabel = NO;
 		useThreadName = [logMessage->threadName length] > 0;
 	}
 	
 	if (useQueueLabel || useThreadName)
-	{
+	 {
 		NSString *fullLabel;
 		NSString *abrvLabel;
 		
@@ -181,7 +175,7 @@
 			fullLabel = logMessage->threadName;
 		
 		OSSpinLockLock(&lock);
-		{
+		 {
 			abrvLabel = [_replacements objectForKey:fullLabel];
 		}
 		OSSpinLockUnlock(&lock);
@@ -192,7 +186,7 @@
 			queueThreadLabel = fullLabel;
 	}
 	else
-	{
+	 {
 		queueThreadLabel = [NSString stringWithFormat:@"%x", logMessage->machThreadID];
 	}
 	
@@ -205,13 +199,13 @@
 	//                              : exact
 	
 	if ((maxQueueLength > 0) && (labelLength > maxQueueLength))
-	{
+	 {
 		// Truncate
 		
 		return [queueThreadLabel substringToIndex:maxQueueLength];
 	}
 	else if (labelLength < minQueueLength)
-	{
+	 {
 		// Padding
 		
 		NSUInteger numSpaces = minQueueLength - labelLength;
@@ -223,28 +217,25 @@
 		return [NSString stringWithFormat:@"%@%s", queueThreadLabel, spaces];
 	}
 	else
-	{
+	 {
 		// Exact
 		
 		return queueThreadLabel;
 	}
 }
 
-- (NSString *)formatLogMessage:(DDLogMessage *)logMessage
-{
+- (NSString *)formatLogMessage:(DDLogMessage *)logMessage {
 	NSString *timestamp = [self stringFromDate:(logMessage->timestamp)];
 	NSString *queueThreadLabel = [self queueThreadLabelForLogMessage:logMessage];
 	
 	return [NSString stringWithFormat:@"%@ [%@] %@", timestamp, queueThreadLabel, logMessage->logMsg];
 }
 
-- (void)didAddToLogger:(id <DDLogger>)logger
-{
+- (void)didAddToLogger:(id <DDLogger>)logger {
 	OSAtomicIncrement32(&atomicLoggerCount);
 }
 
-- (void)willRemoveFromLogger:(id <DDLogger>)logger
-{
+- (void)willRemoveFromLogger:(id <DDLogger>)logger {
 	OSAtomicDecrement32(&atomicLoggerCount);
 }
 

@@ -113,8 +113,7 @@
  * 
  * Archived log files are automatically deleted according to the maximumNumberOfLogFiles property.
 **/
-@interface DDLogFileManagerDefault : NSObject <DDLogFileManager>
-{
+@interface DDLogFileManagerDefault : NSObject <DDLogFileManager> {
 	NSUInteger maximumNumberOfLogFiles;
 	NSString *_logsDirectory;
 }
@@ -154,8 +153,7 @@
  * In addition to the convenience of having a logical default formatter,
  * it will also provide a template that makes it easy for developers to copy and change.
 **/
-@interface DDLogFileFormatterDefault : NSObject <DDLogFormatter>
-{
+@interface DDLogFileFormatterDefault : NSObject <DDLogFormatter> {
 	NSDateFormatter *dateFormatter;
 }
 
@@ -168,8 +166,7 @@
 #pragma mark -
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-@interface DDFileLogger : DDAbstractLogger <DDLogger>
-{
+@interface DDFileLogger : DDAbstractLogger <DDLogger> {
 	__strong id <DDLogFileManager> logFileManager;
 	
 	DDLogFileInfo *currentLogFileInfo;
@@ -256,8 +253,7 @@
  * If you absolutely must get updated values,
  * you can invoke the reset method which will clear the cache.
 **/
-@interface DDLogFileInfo : NSObject
-{
+@interface DDLogFileInfo : NSObject {
 	__strong NSString *filePath;
 	__strong NSString *fileName;
 	

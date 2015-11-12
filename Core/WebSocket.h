@@ -6,8 +6,7 @@
 
 #define WebSocketDidDieNotification  @"WebSocketDidDie"
 
-@interface WebSocket : NSObject
-{
+@interface WebSocket : NSObject {
 	dispatch_queue_t websocketQueue;
 	
 	HTTPMessage *request;

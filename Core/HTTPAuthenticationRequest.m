@@ -13,26 +13,25 @@
 
 @implementation HTTPAuthenticationRequest
 
-- (id)initWithRequest:(HTTPMessage *)request
-{
+- (id)initWithRequest:(HTTPMessage *)request {
 	if ((self = [super init]))
-	{
+	 {
 		NSString *authInfo = [request headerField:@"Authorization"];
 		
 		isBasic = NO;
 		if ([authInfo length] >= 6)
-		{
+		 {
 			isBasic = [[authInfo substringToIndex:6] caseInsensitiveCompare:@"Basic "] == NSOrderedSame;
 		}
 		
 		isDigest = NO;
 		if ([authInfo length] >= 7)
-		{
+		 {
 			isDigest = [[authInfo substringToIndex:7] caseInsensitiveCompare:@"Digest "] == NSOrderedSame;
 		}
 		
 		if (isBasic)
-		{
+		 {
 			NSMutableString *temp = [[authInfo substringFromIndex:6] mutableCopy];
 			CFStringTrimWhitespace((__bridge CFMutableStringRef)temp);
 			
@@ -40,7 +39,7 @@
 		}
 		
 		if (isDigest)
-		{
+		 {
 			username = [self quotedSubHeaderFieldValue:@"username" fromHeaderFieldValue:authInfo];
 			realm    = [self quotedSubHeaderFieldValue:@"realm" fromHeaderFieldValue:authInfo];
 			nonce    = [self quotedSubHeaderFieldValue:@"nonce" fromHeaderFieldValue:authInfo];
@@ -50,8 +49,8 @@
 			// Tests show that Firefox performs this way, but Safari does not
 			// Thus we'll attempt to retrieve the value as nonquoted, but we'll verify it doesn't start with a quote
 			qop      = [self nonquotedSubHeaderFieldValue:@"qop" fromHeaderFieldValue:authInfo];
-			if(qop && ([qop characterAtIndex:0] == '"'))
-			{
+			if (qop && ([qop characterAtIndex:0] == '"'))
+			 {
 				qop  = [self quotedSubHeaderFieldValue:@"qop" fromHeaderFieldValue:authInfo];
 			}
 			
@@ -124,11 +123,10 @@
  * Authorization: Digest username="Mufasa", qop=auth, response="6629fae4939"
  * The sub header field titled 'username' is quoted, and this method would return the value @"Mufasa".
 **/
-- (NSString *)quotedSubHeaderFieldValue:(NSString *)param fromHeaderFieldValue:(NSString *)header
-{
+- (NSString *)quotedSubHeaderFieldValue:(NSString *)param fromHeaderFieldValue:(NSString *)header {
 	NSRange startRange = [header rangeOfString:[NSString stringWithFormat:@"%@=\"", param]];
-	if(startRange.location == NSNotFound)
-	{
+	if (startRange.location == NSNotFound)
+	 {
 		// The param was not found anywhere in the header
 		return nil;
 	}
@@ -138,8 +136,8 @@
 	NSRange postStartRange = NSMakeRange(postStartRangeLocation, postStartRangeLength);
 	
 	NSRange endRange = [header rangeOfString:@"\"" options:0 range:postStartRange];
-	if(endRange.location == NSNotFound)
-	{
+	if (endRange.location == NSNotFound)
+	 {
 		// The ending double-quote was not found anywhere in the header
 		return nil;
 	}
@@ -156,11 +154,10 @@
  * Authorization: Digest username="Mufasa", qop=auth, response="6629fae4939"
  * The sub header field titled 'qop' is nonquoted, and this method would return the value @"auth".
 **/
-- (NSString *)nonquotedSubHeaderFieldValue:(NSString *)param fromHeaderFieldValue:(NSString *)header
-{
+- (NSString *)nonquotedSubHeaderFieldValue:(NSString *)param fromHeaderFieldValue:(NSString *)header {
 	NSRange startRange = [header rangeOfString:[NSString stringWithFormat:@"%@=", param]];
-	if(startRange.location == NSNotFound)
-	{
+	if (startRange.location == NSNotFound)
+	 {
 		// The param was not found anywhere in the header
 		return nil;
 	}
@@ -170,23 +167,23 @@
 	NSRange postStartRange = NSMakeRange(postStartRangeLocation, postStartRangeLength);
 	
 	NSRange endRange = [header rangeOfString:@"," options:0 range:postStartRange];
-	if(endRange.location == NSNotFound)
-	{
+	if (endRange.location == NSNotFound)
+	 {
 		// The ending comma was not found anywhere in the header
 		// However, if the nonquoted param is at the end of the string, there would be no comma
 		// This is only possible if there are no spaces anywhere
 		NSRange endRange2 = [header rangeOfString:@" " options:0 range:postStartRange];
-		if(endRange2.location != NSNotFound)
-		{
+		if (endRange2.location != NSNotFound)
+		 {
 			return nil;
 		}
 		else
-		{
+		 {
 			return [header substringWithRange:postStartRange];
 		}
 	}
 	else
-	{
+	 {
 		NSRange subHeaderRange = NSMakeRange(postStartRangeLocation, endRange.location - postStartRangeLocation);
 		return [header substringWithRange:subHeaderRange];
 	}

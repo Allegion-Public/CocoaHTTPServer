@@ -18,10 +18,9 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 
 @implementation HTTPFileResponse
 
-- (id)initWithFilePath:(NSString *)fpath forConnection:(HTTPConnection *)parent
-{
-	if((self = [super init]))
-	{
+- (id)initWithFilePath:(NSString *)fpath forConnection:(HTTPConnection *)parent {
+	if ((self = [super init]))
+	 {
 		HTTPLogTrace();
 		
 		connection = parent; // Parents retain children, children do NOT retain parents
@@ -29,7 +28,7 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 		fileFD = NULL_FD;
 		filePath = [[fpath copy] stringByResolvingSymlinksInPath];
 		if (filePath == nil)
-		{
+		 {
 			HTTPLogWarn(@"%@: Init failed - Nil filePath", THIS_FILE);
 			
 			return nil;
@@ -37,7 +36,7 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 		
 		NSDictionary *fileAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:filePath error:nil];
 		if (fileAttributes == nil)
-		{
+		 {
 			HTTPLogWarn(@"%@: Init failed - Unable to get file attributes. filePath: %@", THIS_FILE, filePath);
 			
 			return nil;
@@ -54,21 +53,19 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	return self;
 }
 
-- (void)abort
-{
+- (void)abort {
 	HTTPLogTrace();
 	
 	[connection responseDidAbort:self];
 	aborted = YES;
 }
 
-- (BOOL)openFile
-{
+- (BOOL)openFile {
 	HTTPLogTrace();
 	
 	fileFD = open([filePath UTF8String], O_RDONLY);
 	if (fileFD == NULL_FD)
-	{
+	 {
 		HTTPLogError(@"%@[%p]: Unable to open file. filePath: %@", THIS_FILE, self, filePath);
 		
 		[self abort];
@@ -80,10 +77,9 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	return YES;
 }
 
-- (BOOL)openFileIfNeeded
-{
+- (BOOL)openFileIfNeeded {
 	if (aborted)
-	{
+	 {
 		// The file operation has been aborted.
 		// This could be because we failed to open the file,
 		// or the reading process failed.
@@ -91,7 +87,7 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	}
 	
 	if (fileFD != NULL_FD)
-	{
+	 {
 		// File has already been opened.
 		return YES;
 	}
@@ -99,26 +95,23 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	return [self openFile];
 }
 
-- (UInt64)contentLength
-{
+- (UInt64)contentLength {
 	HTTPLogTrace();
 	
 	return fileLength;
 }
 
-- (UInt64)offset
-{
+- (UInt64)offset {
 	HTTPLogTrace();
 	
 	return fileOffset;
 }
 
-- (void)setOffset:(UInt64)offset
-{
+- (void)setOffset:(UInt64)offset {
 	HTTPLogTrace2(@"%@[%p]: setOffset:%llu", THIS_FILE, self, offset);
 	
 	if (![self openFileIfNeeded])
-	{
+	 {
 		// File opening failed,
 		// or response has been aborted due to another error.
 		return;
@@ -128,19 +121,18 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	
 	off_t result = lseek(fileFD, (off_t)offset, SEEK_SET);
 	if (result == -1)
-	{
+	 {
 		HTTPLogError(@"%@[%p]: lseek failed - errno(%i) filePath(%@)", THIS_FILE, self, errno, filePath);
 		
 		[self abort];
 	}
 }
 
-- (NSData *)readDataOfLength:(NSUInteger)length
-{
+- (NSData *)readDataOfLength:(NSUInteger)length {
 	HTTPLogTrace2(@"%@[%p]: readDataOfLength:%lu", THIS_FILE, self, (unsigned long)length);
 	
 	if (![self openFileIfNeeded])
-	{
+	 {
 		// File opening failed,
 		// or response has been aborted due to another error.
 		return nil;
@@ -159,12 +151,12 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	// Do not over-allocate.
 	
 	if (buffer == NULL || bufferSize < bytesToRead)
-	{
+	 {
 		bufferSize = bytesToRead;
 		buffer = reallocf(buffer, (size_t)bufferSize);
 		
 		if (buffer == NULL)
-		{
+		 {
 			HTTPLogError(@"%@[%p]: Unable to allocate buffer", THIS_FILE, self);
 			
 			[self abort];
@@ -181,21 +173,21 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	// Check the results
 	
 	if (result < 0)
-	{
+	 {
 		HTTPLogError(@"%@: Error(%i) reading file(%@)", THIS_FILE, errno, filePath);
 		
 		[self abort];
 		return nil;
 	}
 	else if (result == 0)
-	{
+	 {
 		HTTPLogError(@"%@: Read EOF on file(%@)", THIS_FILE, filePath);
 		
 		[self abort];
 		return nil;
 	}
 	else // (result > 0)
-	{
+	 {
 		HTTPLogVerbose(@"%@[%p]: Read %ld bytes from file", THIS_FILE, self, (long)result);
 		
 		fileOffset += result;
@@ -204,8 +196,7 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	}
 }
 
-- (BOOL)isDone
-{
+- (BOOL)isDone {
 	BOOL result = (fileOffset == fileLength);
 	
 	HTTPLogTrace2(@"%@[%p]: isDone - %@", THIS_FILE, self, (result ? @"YES" : @"NO"));
@@ -213,17 +204,15 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	return result;
 }
 
-- (NSString *)filePath
-{
+- (NSString *)filePath {
 	return filePath;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
 	HTTPLogTrace();
 	
 	if (fileFD != NULL_FD)
-	{
+	 {
 		HTTPLogVerbose(@"%@[%p]: Close fd[%i]", THIS_FILE, self, fileFD);
 		
 		close(fileFD);

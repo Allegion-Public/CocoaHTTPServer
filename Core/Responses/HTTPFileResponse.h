@@ -4,8 +4,7 @@
 @class HTTPConnection;
 
 
-@interface HTTPFileResponse : NSObject <HTTPResponse>
-{
+@interface HTTPFileResponse : NSObject <HTTPResponse> {
 	HTTPConnection *connection;
 	
 	NSString *filePath;

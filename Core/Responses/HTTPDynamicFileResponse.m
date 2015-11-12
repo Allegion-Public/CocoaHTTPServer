@@ -18,10 +18,9 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 - (id)initWithFilePath:(NSString *)fpath
          forConnection:(HTTPConnection *)parent
              separator:(NSString *)separatorStr
- replacementDictionary:(NSDictionary *)dict
-{
+ replacementDictionary:(NSDictionary *)dict {
 	if ((self = [super initWithFilePath:fpath forConnection:parent]))
-	{
+	 {
 		HTTPLogTrace();
 		
 		separator = [separatorStr dataUsingEncoding:NSUTF8StringEncoding];
@@ -30,15 +29,13 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	return self;
 }
 
-- (BOOL)isChunked
-{
+- (BOOL)isChunked {
 	HTTPLogTrace();
 	
 	return YES;
 }
 
-- (UInt64)contentLength
-{
+- (UInt64)contentLength {
 	// This method shouldn't be called since we're using a chunked response.
 	// We override it just to be safe.
 	
@@ -47,16 +44,14 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	return 0;
 }
 
-- (void)setOffset:(UInt64)offset
-{
+- (void)setOffset:(UInt64)offset {
 	// This method shouldn't be called since we're using a chunked response.
 	// We override it just to be safe.
 	
 	HTTPLogTrace();
 }
 
-- (BOOL)isDone
-{
+- (BOOL)isDone {
 	BOOL result = (readOffset == fileLength) && (readBufferOffset == 0);
 	
 	HTTPLogTrace2(@"%@[%p]: isDone - %@", THIS_FILE, self, (result ? @"YES" : @"NO"));
@@ -64,8 +59,7 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	return result;
 }
 
-- (void)processReadBuffer
-{
+- (void)processReadBuffer {
 	HTTPLogTrace();
 	
 	// At this point, the readBuffer has readBufferOffset bytes available.
@@ -96,13 +90,13 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	const void *sep = [separator bytes];
 	
 	while (offset < stopOffset)
-	{
+	 {
 		const void *subBuffer = readBuffer + offset;
 		
 		if (memcmp(subBuffer, sep, sepLen) == 0)
-		{
+		 {
 			if (!found1)
-			{
+			 {
 				// Found the first separator
 				
 				found1 = YES;
@@ -112,7 +106,7 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 				HTTPLogVerbose(@"%@[%p]: Found s1 at %lu", THIS_FILE, self, (unsigned long)s1);
 			}
 			else
-			{
+			 {
 				// Found the second separator
 				
 				found2 = YES;
@@ -123,7 +117,7 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 			}
 			
 			if (found1 && found2)
-			{
+			 {
 				// We found our separators.
 				// Now extract the string between the two separators.
 				
@@ -139,12 +133,12 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 				
 				NSString *key = [[NSString alloc] initWithBytes:strBuf length:strLen encoding:NSUTF8StringEncoding];
 				if (key)
-				{
+				 {
 					// Is there a given replacement for this key?
 					
 					id value = [replacementDict objectForKey:key];
 					if (value)
-					{
+					 {
 						// Found the replacement value.
 						// Now perform the replacement in the buffer.
 						
@@ -154,7 +148,7 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 						NSUInteger vLength = [v length];
 						
 						if (fullRange.length == vLength)
-						{
+						 {
 							// Replacement is exactly the same size as what it is replacing
 							
 							// memcpy(void *restrict dst, const void *restrict src, size_t n);
@@ -162,16 +156,16 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 							memcpy(readBuffer + fullRange.location, [v bytes], vLength);
 						}
 						else // (fullRange.length != vLength)
-						{
+						 {
 							NSInteger diff = (NSInteger)vLength - (NSInteger)fullRange.length;
 							
 							if (diff > 0)
-							{
+							 {
 								// Replacement is bigger than what it is replacing.
 								// Make sure there is room in the buffer for the replacement.
 								
 								if (diff > (readBufferSize - bufLen))
-								{
+								 {
 									NSUInteger inc = MAX(diff, 256);
 									
 									readBufferSize += inc;
@@ -222,7 +216,7 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 			}
 		}
 		else
-		{
+		 {
 			offset++;
 		}
 	}
@@ -231,7 +225,7 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	// It's now time to update the amount of available data we have.
 	
 	if (readOffset == fileLength)
-	{
+	 {
 		// We've read in the entire file.
 		// So there can be no more replacements.
 		
@@ -239,7 +233,7 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 		readBufferOffset = 0;
 	}
 	else
-	{
+	 {
 		// There are a couple different situations that we need to take into account here.
 		// 
 		// Imagine the following file:
@@ -256,12 +250,12 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 		
 		NSUInteger available;
 		if (found1)
-		{
+		 {
 			// Situation 1
 			available = s1;
 		}
 		else
-		{
+		 {
 			// Situation 2
 			available = stopOffset;
 		}
@@ -282,8 +276,7 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	[connection responseHasAvailableData:self];
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
 	HTTPLogTrace();
 	
 	

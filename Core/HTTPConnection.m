@@ -100,10 +100,9 @@ static NSMutableArray *recentNonces;
  * This method is automatically called (courtesy of Cocoa) before the first instantiation of this class.
  * We use it to initialize any static variables.
 **/
-+ (void)initialize
-{
++ (void)initialize {
 	static dispatch_once_t onceToken;
-	dispatch_once(&onceToken, ^{
+	dispatch_once(&onceToken, ^ {
 		
 		// Initialize class variables
 		recentNonceQueue = dispatch_queue_create("HTTPConnection-Nonce", NULL);
@@ -116,8 +115,7 @@ static NSMutableArray *recentNonces;
  * A nonce is a  server-specified string uniquely generated for each 401 response.
  * The default implementation uses a single nonce for each session.
 **/
-+ (NSString *)generateNonce
-{
++ (NSString *)generateNonce {
 	// We use the Core Foundation UUID class to generate a nonce value for us
 	// UUIDs (Universally Unique Identifiers) are 128-bit values guaranteed to be unique.
 	CFUUIDRef theUUID = CFUUIDCreate(NULL);
@@ -134,14 +132,14 @@ static NSMutableArray *recentNonces;
 	// It then disconnects, and creates a new connection with the nonce, and proper authentication.
 	// If we don't honor the nonce for the second connection, QuickTime will repeat the process and never connect.
 	
-	dispatch_async(recentNonceQueue, ^{ @autoreleasepool {
+	dispatch_async(recentNonceQueue, ^ { @autoreleasepool {
 		
 		[recentNonces addObject:newNonce];
 	}});
 	
 	double delayInSeconds = TIMEOUT_NONCE;
 	dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
-	dispatch_after(popTime, recentNonceQueue, ^{ @autoreleasepool {
+	dispatch_after(popTime, recentNonceQueue, ^ { @autoreleasepool {
 		
 		[recentNonces removeObject:newNonce];
 	}});
@@ -152,11 +150,10 @@ static NSMutableArray *recentNonces;
 /**
  * Returns whether or not the given nonce is in the list of recently generated nonce's.
 **/
-+ (BOOL)hasRecentNonce:(NSString *)recentNonce
-{
++ (BOOL)hasRecentNonce:(NSString *)recentNonce {
 	__block BOOL result = NO;
 	
-	dispatch_sync(recentNonceQueue, ^{ @autoreleasepool {
+	dispatch_sync(recentNonceQueue, ^ { @autoreleasepool {
 		
 		result = [recentNonces containsObject:recentNonce];
 	}});
@@ -173,21 +170,20 @@ static NSMutableArray *recentNonces;
  * Associates this new HTTP connection with the given AsyncSocket.
  * This HTTP connection object will become the socket's delegate and take over responsibility for the socket.
 **/
-- (id)initWithAsyncSocket:(GCDAsyncSocket *)newSocket configuration:(HTTPConfig *)aConfig
-{
+- (id)initWithAsyncSocket:(GCDAsyncSocket *)newSocket configuration:(HTTPConfig *)aConfig {
 	if ((self = [super init]))
-	{
+	 {
 		HTTPLogTrace();
 		
 		if (aConfig.queue)
-		{
+		 {
 			connectionQueue = aConfig.queue;
 			#if !OS_OBJECT_USE_OBJC
 			dispatch_retain(connectionQueue);
 			#endif
 		}
 		else
-		{
+		 {
 			connectionQueue = dispatch_queue_create("HTTPConnection", NULL);
 		}
 		
@@ -216,8 +212,7 @@ static NSMutableArray *recentNonces;
 /**
  * Standard Deconstructor.
 **/
-- (void)dealloc
-{
+- (void)dealloc {
 	HTTPLogTrace();
 	
 	#if !OS_OBJECT_USE_OBJC
@@ -228,7 +223,7 @@ static NSMutableArray *recentNonces;
 	[asyncSocket disconnect];
 	
 	if ([httpResponse respondsToSelector:@selector(connectionDidClose)])
-	{
+	 {
 		[httpResponse connectionDidClose];
 	}
 }
@@ -241,8 +236,7 @@ static NSMutableArray *recentNonces;
  * Returns whether or not the server will accept messages of a given method
  * at a particular URI.
 **/
-- (BOOL)supportsMethod:(NSString *)method atPath:(NSString *)path
-{
+- (BOOL)supportsMethod:(NSString *)method atPath:(NSString *)path {
 	HTTPLogTrace();
 	
 	// Override me to support methods such as POST.
@@ -274,8 +268,7 @@ static NSMutableArray *recentNonces;
  * This would be true in the case of a POST, where the client is sending data,
  * or for something like PUT where the client is supposed to be uploading a file.
 **/
-- (BOOL)expectsRequestBodyFromMethod:(NSString *)method atPath:(NSString *)path
-{
+- (BOOL)expectsRequestBodyFromMethod:(NSString *)method atPath:(NSString *)path {
 	HTTPLogTrace();
 	
 	// Override me to add support for other methods that expect the client
@@ -307,8 +300,7 @@ static NSMutableArray *recentNonces;
  * 
  * Note: In order to support secure connections, the sslIdentityAndCertificates method must be implemented.
 **/
-- (BOOL)isSecureServer
-{
+- (BOOL)isSecureServer {
 	HTTPLogTrace();
 	
 	// Override me to create an https server...
@@ -320,8 +312,7 @@ static NSMutableArray *recentNonces;
  * This method is expected to returns an array appropriate for use in kCFStreamSSLCertificates SSL Settings.
  * It should be an array of SecCertificateRefs except for the first element in the array, which is a SecIdentityRef.
 **/
-- (NSArray *)sslIdentityAndCertificates
-{
+- (NSArray *)sslIdentityAndCertificates {
 	HTTPLogTrace();
 	
 	// Override me to provide the proper required SSL identity.
@@ -337,8 +328,7 @@ static NSMutableArray *recentNonces;
  * Returns whether or not the requested resource is password protected.
  * In this generic implementation, nothing is password protected.
 **/
-- (BOOL)isPasswordProtected:(NSString *)path
-{
+- (BOOL)isPasswordProtected:(NSString *)path {
 	HTTPLogTrace();
 	
 	// Override me to provide password protection...
@@ -354,8 +344,7 @@ static NSMutableArray *recentNonces;
  * If at all possible, digest access authentication should be used because it's more secure.
  * Basic authentication sends passwords in the clear and should be avoided unless using SSL/TLS.
 **/
-- (BOOL)useDigestAccessAuthentication
-{
+- (BOOL)useDigestAccessAuthentication {
 	HTTPLogTrace();
 	
 	// Override me to customize the authentication scheme
@@ -368,8 +357,7 @@ static NSMutableArray *recentNonces;
  * Returns the authentication realm.
  * In this generic implmentation, a default realm is used for the entire server.
 **/
-- (NSString *)realm
-{
+- (NSString *)realm {
 	HTTPLogTrace();
 	
 	// Override me to provide a custom realm...
@@ -381,8 +369,7 @@ static NSMutableArray *recentNonces;
 /**
  * Returns the password for the given username.
 **/
-- (NSString *)passwordForUser:(NSString *)username
-{
+- (NSString *)passwordForUser:(NSString *)username {
 	HTTPLogTrace();
 	
 	// Override me to provide proper password authentication
@@ -398,25 +385,24 @@ static NSMutableArray *recentNonces;
 /**
  * Returns whether or not the user is properly authenticated.
 **/
-- (BOOL)isAuthenticated
-{
+- (BOOL)isAuthenticated {
 	HTTPLogTrace();
 	
 	// Extract the authentication information from the Authorization header
 	HTTPAuthenticationRequest *auth = [[HTTPAuthenticationRequest alloc] initWithRequest:request];
 	
 	if ([self useDigestAccessAuthentication])
-	{
+	 {
 		// Digest Access Authentication (RFC 2617)
 		
-		if(![auth isDigest])
-		{
+		if (![auth isDigest])
+		 {
 			// User didn't send proper digest access authentication credentials
 			return NO;
 		}
 		
 		if ([auth username] == nil)
-		{
+		 {
 			// The client didn't provide a username
 			// Most likely they didn't provide any authentication at all
 			return NO;
@@ -424,7 +410,7 @@ static NSMutableArray *recentNonces;
 		
 		NSString *password = [self passwordForUser:[auth username]];
 		if (password == nil)
-		{
+		 {
 			// No access allowed (username doesn't exist in system)
 			return NO;
 		}
@@ -432,7 +418,7 @@ static NSMutableArray *recentNonces;
 		NSString *url = [[request url] relativeString];
 		
 		if (![url isEqualToString:[auth uri]])
-		{
+		 {
 			// Requested URL and Authorization URI do not match
 			// This could be a replay attack
 			// IE - attacker provides same authentication information, but requests a different resource
@@ -441,11 +427,11 @@ static NSMutableArray *recentNonces;
 		
 		// The nonce the client provided will most commonly be stored in our local (cached) nonce variable
 		if (![nonce isEqualToString:[auth nonce]])
-		{
+		 {
 			// The given nonce may be from another connection
 			// We need to search our list of recent nonce strings that have been recently distributed
 			if ([[self class] hasRecentNonce:[auth nonce]])
-			{
+			 {
 				// Store nonce in local (cached) nonce variable to prevent array searches in the future
 				nonce = [[auth nonce] copy];
 				
@@ -457,7 +443,7 @@ static NSMutableArray *recentNonces;
 				lastNC = 0;
 			}
 			else
-			{
+			 {
 				// We have no knowledge of ever distributing such a nonce.
 				// This could be a replay attack from a previous connection in the past.
 				return NO;
@@ -467,7 +453,7 @@ static NSMutableArray *recentNonces;
 		long authNC = strtol([[auth nc] UTF8String], NULL, 16);
 		
 		if (authNC <= lastNC)
-		{
+		 {
 			// The nc value (nonce count) hasn't been incremented since the last request.
 			// This could be a replay attack.
 			return NO;
@@ -489,11 +475,11 @@ static NSMutableArray *recentNonces;
 		return [response isEqualToString:[auth response]];
 	}
 	else
-	{
+	 {
 		// Basic Authentication
 		
 		if (![auth isBasic])
-		{
+		 {
 			// User didn't send proper base authentication credentials
 			return NO;
 		}
@@ -511,7 +497,7 @@ static NSMutableArray *recentNonces;
 		NSRange colonRange = [credentials rangeOfString:@":"];
 		
 		if (colonRange.length == 0)
-		{
+		 {
 			// Malformed credentials
 			return NO;
 		}
@@ -521,7 +507,7 @@ static NSMutableArray *recentNonces;
 		
 		NSString *password = [self passwordForUser:credUsername];
 		if (password == nil)
-		{
+		 {
 			// No access allowed (username doesn't exist in system)
 			return NO;
 		}
@@ -533,8 +519,7 @@ static NSMutableArray *recentNonces;
 /**
  * Adds a digest access authentication challenge to the given response.
 **/
-- (void)addDigestAuthChallenge:(HTTPMessage *)response
-{
+- (void)addDigestAuthChallenge:(HTTPMessage *)response {
 	HTTPLogTrace();
 	
 	NSString *authFormat = @"Digest realm=\"%@\", qop=\"auth\", nonce=\"%@\"";
@@ -546,8 +531,7 @@ static NSMutableArray *recentNonces;
 /**
  * Adds a basic authentication challenge to the given response.
 **/
-- (void)addBasicAuthChallenge:(HTTPMessage *)response
-{
+- (void)addBasicAuthChallenge:(HTTPMessage *)response {
 	HTTPLogTrace();
 	
 	NSString *authFormat = @"Basic realm=\"%@\"";
@@ -564,12 +548,11 @@ static NSMutableArray *recentNonces;
  * Starting point for the HTTP connection after it has been fully initialized (including subclasses).
  * This method is called by the HTTP server.
 **/
-- (void)start
-{
-	dispatch_async(connectionQueue, ^{ @autoreleasepool {
+- (void)start {
+	dispatch_async(connectionQueue, ^ { @autoreleasepool {
 		
 		if (!started)
-		{
+		 {
 			started = YES;
 			[self startConnection];
 		}
@@ -580,9 +563,8 @@ static NSMutableArray *recentNonces;
  * This method is called by the HTTPServer if it is asked to stop.
  * The server, in turn, invokes stop on each HTTPConnection instance.
 **/
-- (void)stop
-{
-	dispatch_async(connectionQueue, ^{ @autoreleasepool {
+- (void)stop {
+	dispatch_async(connectionQueue, ^ { @autoreleasepool {
 		
 		// Disconnect the socket.
 		// The socketDidDisconnect delegate method will handle everything else.
@@ -593,8 +575,7 @@ static NSMutableArray *recentNonces;
 /**
  * Starting point for the HTTP connection.
 **/
-- (void)startConnection
-{
+- (void)startConnection {
 	// Override me to do any custom work before the connection starts.
 	// 
 	// Be sure to invoke [super startConnection] when you're done.
@@ -602,14 +583,14 @@ static NSMutableArray *recentNonces;
 	HTTPLogTrace();
 	
 	if ([self isSecureServer])
-	{
+	 {
 		// We are configured to be an HTTPS server.
 		// That is, we secure via SSL/TLS the connection prior to any communication.
 		
 		NSArray *certificates = [self sslIdentityAndCertificates];
 		
 		if ([certificates count] > 0)
-		{
+		 {
 			// All connections are assumed to be secure. Only secure connections are allowed on this server.
 			NSMutableDictionary *settings = [NSMutableDictionary dictionaryWithCapacity:3];
 			
@@ -634,8 +615,7 @@ static NSMutableArray *recentNonces;
 /**
  * Starts reading an HTTP request.
 **/
-- (void)startReadingRequest
-{
+- (void)startReadingRequest {
 	HTTPLogTrace();
 	
 	[asyncSocket readDataToData:[GCDAsyncSocket CRLFData]
@@ -654,25 +634,24 @@ static NSMutableArray *recentNonces;
  *   num = "50" 
  * }
 **/
-- (NSDictionary *)parseParams:(NSString *)query
-{
+- (NSDictionary *)parseParams:(NSString *)query {
 	NSArray *components = [query componentsSeparatedByString:@"&"];
 	NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:[components count]];
 	
 	NSUInteger i;
 	for (i = 0; i < [components count]; i++)
-	{ 
+	 { 
 		NSString *component = [components objectAtIndex:i];
 		if ([component length] > 0)
-		{
+		 {
 			NSRange range = [component rangeOfString:@"="];
 			if (range.location != NSNotFound)
-			{ 
+			 { 
 				NSString *escapedKey = [component substringToIndex:(range.location + 0)]; 
 				NSString *escapedValue = [component substringFromIndex:(range.location + 1)];
 				
 				if ([escapedKey length] > 0)
-				{
+				 {
 					CFStringRef k, v;
 					
 					k = CFURLCreateStringByReplacingPercentEscapes(NULL, (__bridge CFStringRef)escapedKey, CFSTR(""));
@@ -684,7 +663,7 @@ static NSMutableArray *recentNonces;
 					value = (__bridge_transfer NSString *)v;
 					
 					if (key)
-					{
+					 {
 						if (value)
 							[result setObject:value forKey:key]; 
 						else 
@@ -708,18 +687,17 @@ static NSMutableArray *recentNonces;
  *   num = "50" 
  * } 
 **/ 
-- (NSDictionary *)parseGetParams 
-{
-	if(![request isHeaderComplete]) return nil;
+- (NSDictionary *)parseGetParams  {
+	if (![request isHeaderComplete]) return nil;
 	
 	NSDictionary *result = nil;
 	
 	NSURL *url = [request url];
-	if(url)
-	{
+	if (url)
+	 {
 		NSString *query = [url query];
 		if (query)
-		{
+		 {
 			result = [self parseParams:query];
 		}
 	}
@@ -732,8 +710,7 @@ static NSMutableArray *recentNonces;
  * If successfull, the variables 'ranges' and 'rangeIndex' will be updated, and YES will be returned.
  * Otherwise, NO is returned, and the range request should be ignored.
  **/
-- (BOOL)parseRangeRequest:(NSString *)rangeHeader withContentLength:(UInt64)contentLength
-{
+- (BOOL)parseRangeRequest:(NSString *)rangeHeader withContentLength:(UInt64)contentLength {
 	HTTPLogTrace();
 	
 	// Examples of byte-ranges-specifier values (assuming an entity-body of length 10000):
@@ -755,7 +732,7 @@ static NSMutableArray *recentNonces;
 	
 	NSRange eqsignRange = [rangeHeader rangeOfString:@"="];
 	
-	if(eqsignRange.location == NSNotFound) return NO;
+	if (eqsignRange.location == NSNotFound) return NO;
 	
 	NSUInteger tIndex = eqsignRange.location;
 	NSUInteger fIndex = eqsignRange.location + eqsignRange.length;
@@ -766,11 +743,11 @@ static NSMutableArray *recentNonces;
 	CFStringTrimWhitespace((__bridge CFMutableStringRef)rangeType);
 	CFStringTrimWhitespace((__bridge CFMutableStringRef)rangeValue);
 	
-	if([rangeType caseInsensitiveCompare:@"bytes"] != NSOrderedSame) return NO;
+	if ([rangeType caseInsensitiveCompare:@"bytes"] != NSOrderedSame) return NO;
 	
 	NSArray *rangeComponents = [rangeValue componentsSeparatedByString:@","];
 	
-	if([rangeComponents count] == 0) return NO;
+	if ([rangeComponents count] == 0) return NO;
 	
 	ranges = [[NSMutableArray alloc] initWithCapacity:[rangeComponents count]];
 	
@@ -781,24 +758,24 @@ static NSMutableArray *recentNonces;
 	
 	NSUInteger i;
 	for (i = 0; i < [rangeComponents count]; i++)
-	{
+	 {
 		NSString *rangeComponent = [rangeComponents objectAtIndex:i];
 		
 		NSRange dashRange = [rangeComponent rangeOfString:@"-"];
 		
 		if (dashRange.location == NSNotFound)
-		{
+		 {
 			// We're dealing with an individual byte number
 			
 			UInt64 byteIndex;
-			if(![NSNumber parseString:rangeComponent intoUInt64:&byteIndex]) return NO;
+			if (![NSNumber parseString:rangeComponent intoUInt64:&byteIndex]) return NO;
 			
-			if(byteIndex >= contentLength) return NO;
+			if (byteIndex >= contentLength) return NO;
 			
 			[ranges addObject:[NSValue valueWithDDRange:DDMakeRange(byteIndex, 1)]];
 		}
 		else
-		{
+		 {
 			// We're dealing with a range of bytes
 			
 			tIndex = dashRange.location;
@@ -813,59 +790,59 @@ static NSMutableArray *recentNonces;
 			BOOL hasR2 = [NSNumber parseString:r2str intoUInt64:&r2];
 			
 			if (!hasR1)
-			{
+			 {
 				// We're dealing with a "-[#]" range
 				// 
 				// r2 is the number of ending bytes to include in the range
 				
-				if(!hasR2) return NO;
-				if(r2 > contentLength) return NO;
+				if (!hasR2) return NO;
+				if (r2 > contentLength) return NO;
 				
 				UInt64 startIndex = contentLength - r2;
 				
 				[ranges addObject:[NSValue valueWithDDRange:DDMakeRange(startIndex, r2)]];
 			}
 			else if (!hasR2)
-			{
+			 {
 				// We're dealing with a "[#]-" range
 				// 
 				// r1 is the starting index of the range, which goes all the way to the end
 				
-				if(r1 >= contentLength) return NO;
+				if (r1 >= contentLength) return NO;
 				
 				[ranges addObject:[NSValue valueWithDDRange:DDMakeRange(r1, contentLength - r1)]];
 			}
 			else
-			{
+			 {
 				// We're dealing with a normal "[#]-[#]" range
 				// 
 				// Note: The range is inclusive. So 0-1 has a length of 2 bytes.
 				
-				if(r1 > r2) return NO;
-				if(r2 >= contentLength) return NO;
+				if (r1 > r2) return NO;
+				if (r2 >= contentLength) return NO;
 				
 				[ranges addObject:[NSValue valueWithDDRange:DDMakeRange(r1, r2 - r1 + 1)]];
 			}
 		}
 	}
 	
-	if([ranges count] == 0) return NO;
+	if ([ranges count] == 0) return NO;
 	
 	// Now make sure none of the ranges overlap
 	
 	for (i = 0; i < [ranges count] - 1; i++)
-	{
+	 {
 		DDRange range1 = [[ranges objectAtIndex:i] ddrangeValue];
 		
 		NSUInteger j;
 		for (j = i+1; j < [ranges count]; j++)
-		{
+		 {
 			DDRange range2 = [[ranges objectAtIndex:j] ddrangeValue];
 			
 			DDRange iRange = DDIntersectionRange(range1, range2);
 			
-			if(iRange.length != 0)
-			{
+			if (iRange.length != 0)
+			 {
 				return NO;
 			}
 		}
@@ -878,9 +855,8 @@ static NSMutableArray *recentNonces;
 	return YES;
 }
 
-- (NSString *)requestURI
-{
-	if(request == nil) return nil;
+- (NSString *)requestURI {
+	if (request == nil) return nil;
 	
 	return [[request url] relativeString];
 }
@@ -889,12 +865,11 @@ static NSMutableArray *recentNonces;
  * This method is called after a full HTTP request has been received.
  * The current request is in the HTTPMessage request variable.
 **/
-- (void)replyToHTTPRequest
-{
+- (void)replyToHTTPRequest {
 	HTTPLogTrace();
 	
 	if (HTTP_LOG_VERBOSE)
-	{
+	 {
 		NSData *tempData = [request messageData];
 		
 		NSString *tempStr = [[NSString alloc] initWithData:tempData encoding:NSUTF8StringEncoding];
@@ -906,7 +881,7 @@ static NSMutableArray *recentNonces;
 	
 	NSString *version = [request version];
 	if (![version isEqualToString:HTTPVersion1_1] && ![version isEqualToString:HTTPVersion1_0])
-	{
+	 {
 		[self handleVersionNotSupported:version];
 		return;
 	}
@@ -916,17 +891,17 @@ static NSMutableArray *recentNonces;
 	
 	// Check for WebSocket request
 	if ([WebSocket isWebSocketRequest:request])
-	{
+	 {
 		HTTPLogVerbose(@"isWebSocket");
 		
 		WebSocket *ws = [self webSocketForURI:uri];
 		
 		if (ws == nil)
-		{
+		 {
 			[self handleResourceNotFound];
 		}
 		else
-		{
+		 {
 			[ws start];
 			
 			[[config server] addWebSocket:ws];
@@ -934,7 +909,7 @@ static NSMutableArray *recentNonces;
 			// The WebSocket should now be the delegate of the underlying socket.
 			// But gracefully handle the situation if it forgot.
 			if ([asyncSocket delegate] == self)
-			{
+			 {
 				HTTPLogWarn(@"%@[%p]: WebSocket forgot to set itself as socket delegate", THIS_FILE, self);
 				
 				// Disconnect the socket.
@@ -942,7 +917,7 @@ static NSMutableArray *recentNonces;
 				[asyncSocket disconnect];
 			}
 			else
-			{
+			 {
 				// The WebSocket is using the socket,
 				// so make sure we don't disconnect it in the dealloc method.
 				asyncSocket = nil;
@@ -978,7 +953,7 @@ static NSMutableArray *recentNonces;
 	// Check Authentication (if needed)
 	// If not properly authenticated for resource, issue Unauthorized response
 	if ([self isPasswordProtected:uri] && ![self isAuthenticated])
-	{
+	 {
 		[self handleAuthenticationFailed];
 		return;
 	}
@@ -992,7 +967,7 @@ static NSMutableArray *recentNonces;
 	httpResponse = [self httpResponseForMethod:method URI:uri];
 	
 	if (httpResponse == nil)
-	{
+	 {
 		[self handleResourceNotFound];
 		return;
 	}
@@ -1005,8 +980,7 @@ static NSMutableArray *recentNonces;
  * 
  * Note: The returned HTTPMessage is owned by the sender, who is responsible for releasing it.
 **/
-- (HTTPMessage *)newUniRangeResponse:(UInt64)contentLength
-{
+- (HTTPMessage *)newUniRangeResponse:(UInt64)contentLength {
 	HTTPLogTrace();
 	
 	// Status Code 206 - Partial Content
@@ -1029,8 +1003,7 @@ static NSMutableArray *recentNonces;
  * 
  * Note: The returned HTTPMessage is owned by the sender, who is responsible for releasing it.
 **/
-- (HTTPMessage *)newMultiRangeResponse:(UInt64)contentLength
-{
+- (HTTPMessage *)newMultiRangeResponse:(UInt64)contentLength {
 	HTTPLogTrace();
 	
 	// Status Code 206 - Partial Content
@@ -1068,7 +1041,7 @@ static NSMutableArray *recentNonces;
 	
 	NSUInteger i;
 	for (i = 0; i < [ranges count]; i++)
-	{
+	 {
 		DDRange range = [[ranges objectAtIndex:i] ddrangeValue];
 		
 		NSString *rangeStr = [NSString stringWithFormat:@"%qu-%qu", range.location, DDMaxRange(range) - 1];
@@ -1101,16 +1074,14 @@ static NSMutableArray *recentNonces;
  * Returns the chunk size line that must precede each chunk of data when using chunked transfer encoding.
  * This consists of the size of the data, in hexadecimal, followed by a CRLF.
 **/
-- (NSData *)chunkedTransferSizeLineForLength:(NSUInteger)length
-{
+- (NSData *)chunkedTransferSizeLineForLength:(NSUInteger)length {
 	return [[NSString stringWithFormat:@"%lx\r\n", (unsigned long)length] dataUsingEncoding:NSUTF8StringEncoding];
 }
 
 /**
  * Returns the data that signals the end of a chunked transfer.
 **/
-- (NSData *)chunkedTransferFooter
-{
+- (NSData *)chunkedTransferFooter {
 	// Each data chunk is preceded by a size line (in hex and including a CRLF),
 	// followed by the data itself, followed by another CRLF.
 	// After every data chunk has been sent, a zero size line is sent,
@@ -1120,12 +1091,11 @@ static NSMutableArray *recentNonces;
 	return [@"\r\n0\r\n\r\n" dataUsingEncoding:NSUTF8StringEncoding];
 }
 
-- (void)sendResponseHeadersAndBody
-{
+- (void)sendResponseHeadersAndBody {
 	if ([httpResponse respondsToSelector:@selector(delayResponseHeaders)])
-	{
+	 {
 		if ([httpResponse delayResponseHeaders])
-		{
+		 {
 			return;
 		}
 	}
@@ -1133,7 +1103,7 @@ static NSMutableArray *recentNonces;
 	BOOL isChunked = NO;
 	
 	if ([httpResponse respondsToSelector:@selector(isChunked)])
-	{
+	 {
 		isChunked = [httpResponse isChunked];
 	}
 	
@@ -1143,7 +1113,7 @@ static NSMutableArray *recentNonces;
 	UInt64 contentLength = 0;
 	
 	if (!isChunked)
-	{
+	 {
 		contentLength = [httpResponse contentLength];
 	}
 	
@@ -1157,9 +1127,9 @@ static NSMutableArray *recentNonces;
 	// This is because range requests might include a range like "give me the last 100 bytes"
 	
 	if (!isChunked && rangeHeader)
-	{
+	 {
 		if ([self parseRangeRequest:rangeHeader withContentLength:contentLength])
-		{
+		 {
 			isRangeRequest = YES;
 		}
 	}
@@ -1167,35 +1137,35 @@ static NSMutableArray *recentNonces;
 	HTTPMessage *response;
 	
 	if (!isRangeRequest)
-	{
+	 {
 		// Create response
 		// Default status code: 200 - OK
 		NSInteger status = 200;
 		
 		if ([httpResponse respondsToSelector:@selector(status)])
-		{
+		 {
 			status = [httpResponse status];
 		}
 		response = [[HTTPMessage alloc] initResponseWithStatusCode:status description:nil version:HTTPVersion1_1];
 		
 		if (isChunked)
-		{
+		 {
 			[response setHeaderField:@"Transfer-Encoding" value:@"chunked"];
 		}
 		else
-		{
+		 {
 			NSString *contentLengthStr = [NSString stringWithFormat:@"%qu", contentLength];
 			[response setHeaderField:@"Content-Length" value:contentLengthStr];
 		}
 	}
 	else
-	{
+	 {
 		if ([ranges count] == 1)
-		{
+		 {
 			response = [self newUniRangeResponse:contentLength];
 		}
 		else
-		{
+		 {
 			response = [self newMultiRangeResponse:contentLength];
 		}
 	}
@@ -1206,14 +1176,14 @@ static NSMutableArray *recentNonces;
 	// If they issue a 'GET' command, we need to include the file
 	
 	if ([[request method] isEqualToString:@"HEAD"] || isZeroLengthResponse)
-	{
+	 {
 		NSData *responseData = [self preprocessResponse:response];
 		[asyncSocket writeData:responseData withTimeout:TIMEOUT_WRITE_HEAD tag:HTTP_RESPONSE];
 		
 		sentResponseHeaders = YES;
 	}
 	else
-	{
+	 {
 		// Write the header response
 		NSData *responseData = [self preprocessResponse:response];
 		[asyncSocket writeData:responseData withTimeout:TIMEOUT_WRITE_HEAD tag:HTTP_PARTIAL_RESPONSE_HEADER];
@@ -1222,45 +1192,45 @@ static NSMutableArray *recentNonces;
 		
 		// Now we need to send the body of the response
 		if (!isRangeRequest)
-		{
+		 {
 			// Regular request
 			NSData *data = [httpResponse readDataOfLength:READ_CHUNKSIZE];
 			
 			if ([data length] > 0)
-			{
+			 {
 				[responseDataSizes addObject:[NSNumber numberWithUnsignedInteger:[data length]]];
 				
 				if (isChunked)
-				{
+				 {
 					NSData *chunkSize = [self chunkedTransferSizeLineForLength:[data length]];
 					[asyncSocket writeData:chunkSize withTimeout:TIMEOUT_WRITE_HEAD tag:HTTP_CHUNKED_RESPONSE_HEADER];
 					
 					[asyncSocket writeData:data withTimeout:TIMEOUT_WRITE_BODY tag:HTTP_CHUNKED_RESPONSE_BODY];
 					
 					if ([httpResponse isDone])
-					{
+					 {
 						NSData *footer = [self chunkedTransferFooter];
 						[asyncSocket writeData:footer withTimeout:TIMEOUT_WRITE_HEAD tag:HTTP_RESPONSE];
 					}
 					else
-					{
+					 {
 						NSData *footer = [GCDAsyncSocket CRLFData];
 						[asyncSocket writeData:footer withTimeout:TIMEOUT_WRITE_HEAD tag:HTTP_CHUNKED_RESPONSE_FOOTER];
 					}
 				}
 				else
-				{
+				 {
 					long tag = [httpResponse isDone] ? HTTP_RESPONSE : HTTP_PARTIAL_RESPONSE_BODY;
 					[asyncSocket writeData:data withTimeout:TIMEOUT_WRITE_BODY tag:tag];
 				}
 			}
 		}
 		else
-		{
+		 {
 			// Client specified a byte range in request
 			
 			if ([ranges count] == 1)
-			{
+			 {
 				// Client is requesting a single range
 				DDRange range = [[ranges objectAtIndex:0] ddrangeValue];
 				
@@ -1271,7 +1241,7 @@ static NSMutableArray *recentNonces;
 				NSData *data = [httpResponse readDataOfLength:bytesToRead];
 				
 				if ([data length] > 0)
-				{
+				 {
 					[responseDataSizes addObject:[NSNumber numberWithUnsignedInteger:[data length]]];
 					
 					long tag = [data length] == range.length ? HTTP_RESPONSE : HTTP_PARTIAL_RANGE_RESPONSE_BODY;
@@ -1279,7 +1249,7 @@ static NSMutableArray *recentNonces;
 				}
 			}
 			else
-			{
+			 {
 				// Client is requesting multiple ranges
 				// We have to send each range using multipart/byteranges
 				
@@ -1297,7 +1267,7 @@ static NSMutableArray *recentNonces;
 				NSData *data = [httpResponse readDataOfLength:bytesToRead];
 				
 				if ([data length] > 0)
-				{
+				 {
 					[responseDataSizes addObject:[NSNumber numberWithUnsignedInteger:[data length]]];
 					
 					[asyncSocket writeData:data withTimeout:TIMEOUT_WRITE_BODY tag:HTTP_PARTIAL_RANGES_RESPONSE_BODY];
@@ -1314,13 +1284,12 @@ static NSMutableArray *recentNonces;
  * We keep track of this information in order to keep our memory footprint low while
  * working with asynchronous HTTPResponse objects.
 **/
-- (NSUInteger)writeQueueSize
-{
+- (NSUInteger)writeQueueSize {
 	NSUInteger result = 0;
 	
 	NSUInteger i;
 	for(i = 0; i < [responseDataSizes count]; i++)
-	{
+	 {
 		result += [[responseDataSizes objectAtIndex:i] unsignedIntegerValue];
 	}
 	
@@ -1333,8 +1302,7 @@ static NSMutableArray *recentNonces;
  * 
  * This method should only be called for standard (non-range) responses.
 **/
-- (void)continueSendingStandardResponseBody
-{
+- (void)continueSendingStandardResponseBody {
 	HTTPLogTrace();
 	
 	// This method is called when either asyncSocket has finished writing one of the response data chunks,
@@ -1353,42 +1321,42 @@ static NSMutableArray *recentNonces;
 	
 	NSUInteger writeQueueSize = [self writeQueueSize];
 	
-	if(writeQueueSize >= READ_CHUNKSIZE) return;
+	if (writeQueueSize >= READ_CHUNKSIZE) return;
 	
 	NSUInteger available = READ_CHUNKSIZE - writeQueueSize;
 	NSData *data = [httpResponse readDataOfLength:available];
 	
 	if ([data length] > 0)
-	{
+	 {
 		[responseDataSizes addObject:[NSNumber numberWithUnsignedInteger:[data length]]];
 		
 		BOOL isChunked = NO;
 		
 		if ([httpResponse respondsToSelector:@selector(isChunked)])
-		{
+		 {
 			isChunked = [httpResponse isChunked];
 		}
 		
 		if (isChunked)
-		{
+		 {
 			NSData *chunkSize = [self chunkedTransferSizeLineForLength:[data length]];
 			[asyncSocket writeData:chunkSize withTimeout:TIMEOUT_WRITE_HEAD tag:HTTP_CHUNKED_RESPONSE_HEADER];
 			
 			[asyncSocket writeData:data withTimeout:TIMEOUT_WRITE_BODY tag:HTTP_CHUNKED_RESPONSE_BODY];
 			
-			if([httpResponse isDone])
-			{
+			if ([httpResponse isDone])
+			 {
 				NSData *footer = [self chunkedTransferFooter];
 				[asyncSocket writeData:footer withTimeout:TIMEOUT_WRITE_HEAD tag:HTTP_RESPONSE];
 			}
 			else
-			{
+			 {
 				NSData *footer = [GCDAsyncSocket CRLFData];
 				[asyncSocket writeData:footer withTimeout:TIMEOUT_WRITE_HEAD tag:HTTP_CHUNKED_RESPONSE_FOOTER];
 			}
 		}
 		else
-		{
+		 {
 			long tag = [httpResponse isDone] ? HTTP_RESPONSE : HTTP_PARTIAL_RESPONSE_BODY;
 			[asyncSocket writeData:data withTimeout:TIMEOUT_WRITE_BODY tag:tag];
 		}
@@ -1401,8 +1369,7 @@ static NSMutableArray *recentNonces;
  * 
  * This method should only be called for single-range responses.
 **/
-- (void)continueSendingSingleRangeResponseBody
-{
+- (void)continueSendingSingleRangeResponseBody {
 	HTTPLogTrace();
 	
 	// This method is called when either asyncSocket has finished writing one of the response data chunks,
@@ -1421,7 +1388,7 @@ static NSMutableArray *recentNonces;
 	
 	NSUInteger writeQueueSize = [self writeQueueSize];
 	
-	if(writeQueueSize >= READ_CHUNKSIZE) return;
+	if (writeQueueSize >= READ_CHUNKSIZE) return;
 	
 	DDRange range = [[ranges objectAtIndex:0] ddrangeValue];
 	
@@ -1430,14 +1397,14 @@ static NSMutableArray *recentNonces;
 	UInt64 bytesLeft = range.length - bytesRead;
 	
 	if (bytesLeft > 0)
-	{
+	 {
 		NSUInteger available = READ_CHUNKSIZE - writeQueueSize;
 		NSUInteger bytesToRead = bytesLeft < available ? (NSUInteger)bytesLeft : available;
 		
 		NSData *data = [httpResponse readDataOfLength:bytesToRead];
 		
 		if ([data length] > 0)
-		{
+		 {
 			[responseDataSizes addObject:[NSNumber numberWithUnsignedInteger:[data length]]];
 			
 			long tag = [data length] == bytesLeft ? HTTP_RESPONSE : HTTP_PARTIAL_RANGE_RESPONSE_BODY;
@@ -1452,8 +1419,7 @@ static NSMutableArray *recentNonces;
  * 
  * This method should only be called for multi-range responses.
 **/
-- (void)continueSendingMultiRangeResponseBody
-{
+- (void)continueSendingMultiRangeResponseBody {
 	HTTPLogTrace();
 	
 	// This method is called when either asyncSocket has finished writing one of the response data chunks,
@@ -1472,7 +1438,7 @@ static NSMutableArray *recentNonces;
 	
 	NSUInteger writeQueueSize = [self writeQueueSize];
 	
-	if(writeQueueSize >= READ_CHUNKSIZE) return;
+	if (writeQueueSize >= READ_CHUNKSIZE) return;
 	
 	DDRange range = [[ranges objectAtIndex:rangeIndex] ddrangeValue];
 	
@@ -1481,23 +1447,23 @@ static NSMutableArray *recentNonces;
 	UInt64 bytesLeft = range.length - bytesRead;
 	
 	if (bytesLeft > 0)
-	{
+	 {
 		NSUInteger available = READ_CHUNKSIZE - writeQueueSize;
 		NSUInteger bytesToRead = bytesLeft < available ? (NSUInteger)bytesLeft : available;
 		
 		NSData *data = [httpResponse readDataOfLength:bytesToRead];
 		
 		if ([data length] > 0)
-		{
+		 {
 			[responseDataSizes addObject:[NSNumber numberWithUnsignedInteger:[data length]]];
 			
 			[asyncSocket writeData:data withTimeout:TIMEOUT_WRITE_BODY tag:HTTP_PARTIAL_RANGES_RESPONSE_BODY];
 		}
 	}
 	else
-	{
+	 {
 		if (++rangeIndex < [ranges count])
-		{
+		 {
 			// Write range header
 			NSData *rangeHeader = [ranges_headers objectAtIndex:rangeIndex];
 			[asyncSocket writeData:rangeHeader withTimeout:TIMEOUT_WRITE_HEAD tag:HTTP_PARTIAL_RESPONSE_HEADER];
@@ -1513,14 +1479,14 @@ static NSMutableArray *recentNonces;
 			NSData *data = [httpResponse readDataOfLength:bytesToRead];
 			
 			if ([data length] > 0)
-			{
+			 {
 				[responseDataSizes addObject:[NSNumber numberWithUnsignedInteger:[data length]]];
 				
 				[asyncSocket writeData:data withTimeout:TIMEOUT_WRITE_BODY tag:HTTP_PARTIAL_RANGES_RESPONSE_BODY];
 			}
 		}
 		else
-		{
+		 {
 			// We're not done yet - we still have to send the closing boundry tag
 			NSString *endingBoundryStr = [NSString stringWithFormat:@"\r\n--%@--\r\n", ranges_boundry];
 			NSData *endingBoundryData = [endingBoundryStr dataUsingEncoding:NSUTF8StringEncoding];
@@ -1538,8 +1504,7 @@ static NSMutableArray *recentNonces;
  * Returns an array of possible index pages.
  * For example: {"index.html", "index.htm"}
 **/
-- (NSArray *)directoryIndexFileNames
-{
+- (NSArray *)directoryIndexFileNames {
 	HTTPLogTrace();
 	
 	// Override me to support other index pages.
@@ -1547,16 +1512,14 @@ static NSMutableArray *recentNonces;
 	return [NSArray arrayWithObjects:@"index.html", @"index.htm", nil];
 }
 
-- (NSString *)filePathForURI:(NSString *)path
-{
+- (NSString *)filePathForURI:(NSString *)path {
 	return [self filePathForURI:path allowDirectory:NO];
 }
 
 /**
  * Converts relative URI path into full file-system path.
 **/
-- (NSString *)filePathForURI:(NSString *)path allowDirectory:(BOOL)allowDirectory
-{
+- (NSString *)filePathForURI:(NSString *)path allowDirectory:(BOOL)allowDirectory {
 	HTTPLogTrace();
 	
 	// Override me to perform custom path mapping.
@@ -1570,7 +1533,7 @@ static NSMutableArray *recentNonces;
 	// then it makes no sense to try to return anything.
 	
 	if (documentRoot == nil)
-	{
+	 {
 		HTTPLogWarn(@"%@[%p]: No configured document root", THIS_FILE, self);
 		return nil;
 	}
@@ -1581,7 +1544,7 @@ static NSMutableArray *recentNonces;
 	
 	NSURL *docRoot = [NSURL fileURLWithPath:documentRoot isDirectory:YES];
 	if (docRoot == nil)
-	{
+	 {
 		HTTPLogWarn(@"%@[%p]: Document root is invalid file path", THIS_FILE, self);
 		return nil;
 	}
@@ -1601,7 +1564,7 @@ static NSMutableArray *recentNonces;
 	NSString *fullPath = [[documentRoot stringByAppendingPathComponent:relativePath] stringByStandardizingPath];
 	
 	if ([relativePath isEqualToString:@"/"])
-	{
+	 {
 		fullPath = [fullPath stringByAppendingString:@"/"];
 	}
 	
@@ -1618,30 +1581,30 @@ static NSMutableArray *recentNonces;
 	//           fullPath="/Users/robbie/Sites_Secret/TopSecret"
 	
 	if (![documentRoot hasSuffix:@"/"])
-	{
+	 {
 		documentRoot = [documentRoot stringByAppendingString:@"/"];
 	}
 	
 	if (![fullPath hasPrefix:documentRoot])
-	{
+	 {
 		HTTPLogWarn(@"%@[%p]: Request for file outside document root", THIS_FILE, self);
 		return nil;
 	}
 	
 	// Part 4: Search for index page if path is pointing to a directory
 	if (!allowDirectory)
-	{
+	 {
 		BOOL isDir = NO;
 		if ([[NSFileManager defaultManager] fileExistsAtPath:fullPath isDirectory:&isDir] && isDir)
-		{
+		 {
 			NSArray *indexFileNames = [self directoryIndexFileNames];
 
 			for (NSString *indexFileName in indexFileNames)
-			{
+			 {
 				NSString *indexFilePath = [fullPath stringByAppendingPathComponent:indexFileName];
 
 				if ([[NSFileManager defaultManager] fileExistsAtPath:indexFilePath isDirectory:&isDir] && !isDir)
-				{
+				 {
 					return indexFilePath;
 				}
 			}
@@ -1661,8 +1624,7 @@ static NSMutableArray *recentNonces;
  * HTTPFileResponse is a wrapper for an NSFileHandle object, and is the preferred way to send a file response.
  * HTTPDataResponse is a wrapper for an NSData object, and may be used to send a custom response.
 **/
-- (NSObject<HTTPResponse> *)httpResponseForMethod:(NSString *)method URI:(NSString *)path
-{
+- (NSObject<HTTPResponse> *)httpResponseForMethod:(NSString *)method URI:(NSString *)path {
 	HTTPLogTrace();
 	
 	// Override me to provide custom responses.
@@ -1672,7 +1634,7 @@ static NSMutableArray *recentNonces;
 	BOOL isDir = NO;
 	
 	if (filePath && [[NSFileManager defaultManager] fileExistsAtPath:filePath isDirectory:&isDir] && !isDir)
-	{
+	 {
 		return [[HTTPFileResponse alloc] initWithFilePath:filePath forConnection:self];
 	
 		// Use me instead for asynchronous file IO.
@@ -1684,8 +1646,7 @@ static NSMutableArray *recentNonces;
 	return nil;
 }
 
-- (WebSocket *)webSocketForURI:(NSString *)path
-{
+- (WebSocket *)webSocketForURI:(NSString *)path {
 	HTTPLogTrace();
 	
 	// Override me to provide custom WebSocket responses.
@@ -1711,8 +1672,7 @@ static NSMutableArray *recentNonces;
 /**
  * This method is called after receiving all HTTP headers, but before reading any of the request body.
 **/
-- (void)prepareForBodyWithSize:(UInt64)contentLength
-{
+- (void)prepareForBodyWithSize:(UInt64)contentLength {
 	// Override me to allocate buffers, file handles, etc.
 }
 
@@ -1720,8 +1680,7 @@ static NSMutableArray *recentNonces;
  * This method is called to handle data read from a POST / PUT.
  * The given data is part of the request body.
 **/
-- (void)processBodyData:(NSData *)postDataChunk
-{
+- (void)processBodyData:(NSData *)postDataChunk {
 	// Override me to do something useful with a POST / PUT.
 	// If the post is small, such as a simple form, you may want to simply append the data to the request.
 	// If the post is big, such as a file upload, you may want to store the file to disk.
@@ -1735,8 +1694,7 @@ static NSMutableArray *recentNonces;
 /**
  * This method is called after the request body has been fully read but before the HTTP request is processed.
 **/
-- (void)finishBody
-{
+- (void)finishBody {
 	// Override me to perform any final operations on an upload.
 	// For example, if you were saving the upload to disk this would be
 	// the hook to flush any pending data to disk and maybe close the file.
@@ -1749,8 +1707,7 @@ static NSMutableArray *recentNonces;
 /**
  * Called if the HTML version is other than what is supported
 **/
-- (void)handleVersionNotSupported:(NSString *)version
-{
+- (void)handleVersionNotSupported:(NSString *)version {
 	// Override me for custom error handling of unsupported http version responses
 	// If you simply want to add a few extra header fields, see the preprocessErrorResponse: method.
 	// You can also use preprocessErrorResponse: to add an optional HTML body.
@@ -1768,8 +1725,7 @@ static NSMutableArray *recentNonces;
 /**
  * Called if the authentication information was required and absent, or if authentication failed.
 **/
-- (void)handleAuthenticationFailed
-{
+- (void)handleAuthenticationFailed {
 	// Override me for custom handling of authentication challenges
 	// If you simply want to add a few extra header fields, see the preprocessErrorResponse: method.
 	// You can also use preprocessErrorResponse: to add an optional HTML body.
@@ -1781,11 +1737,11 @@ static NSMutableArray *recentNonces;
 	[response setHeaderField:@"Content-Length" value:@"0"];
 	
 	if ([self useDigestAccessAuthentication])
-	{
+	 {
 		[self addDigestAuthChallenge:response];
 	}
 	else
-	{
+	 {
 		[self addBasicAuthChallenge:response];
 	}
 	
@@ -1799,8 +1755,7 @@ static NSMutableArray *recentNonces;
  * The data parameter is the invalid HTTP header line, including CRLF, as read from GCDAsyncSocket.
  * The data parameter may also be nil if the request as a whole was invalid, such as a POST with no Content-Length.
 **/
-- (void)handleInvalidRequest:(NSData *)data
-{
+- (void)handleInvalidRequest:(NSData *)data {
 	// Override me for custom error handling of invalid HTTP requests
 	// If you simply want to add a few extra header fields, see the preprocessErrorResponse: method.
 	// You can also use preprocessErrorResponse: to add an optional HTML body.
@@ -1825,8 +1780,7 @@ static NSMutableArray *recentNonces;
 /**
  * Called if we receive a HTTP request with a method other than GET or HEAD.
 **/
-- (void)handleUnknownMethod:(NSString *)method
-{
+- (void)handleUnknownMethod:(NSString *)method {
 	// Override me for custom error handling of 405 method not allowed responses.
 	// If you simply want to add a few extra header fields, see the preprocessErrorResponse: method.
 	// You can also use preprocessErrorResponse: to add an optional HTML body.
@@ -1852,8 +1806,7 @@ static NSMutableArray *recentNonces;
 /**
  * Called if we're unable to find the requested resource.
 **/
-- (void)handleResourceNotFound
-{
+- (void)handleResourceNotFound {
 	// Override me for custom error handling of 404 not found responses
 	// If you simply want to add a few extra header fields, see the preprocessErrorResponse: method.
 	// You can also use preprocessErrorResponse: to add an optional HTML body.
@@ -1876,8 +1829,7 @@ static NSMutableArray *recentNonces;
 /**
  * Gets the current date and time, formatted properly (according to RFC) for insertion into an HTTP header.
 **/
-- (NSString *)dateAsString:(NSDate *)date
-{
+- (NSString *)dateAsString:(NSDate *)date {
 	// From Apple's Documentation (Data Formatting Guide -> Date Formatters -> Cache Formatters for Efficiency):
 	// 
 	// "Creating a date formatter is not a cheap operation. If you are likely to use a formatter frequently,
@@ -1895,7 +1847,7 @@ static NSMutableArray *recentNonces;
 	static NSDateFormatter *df;
 	
 	static dispatch_once_t onceToken;
-	dispatch_once(&onceToken, ^{
+	dispatch_once(&onceToken, ^ {
 		
 		// Example: Sun, 06 Nov 1994 08:49:37 GMT
 		
@@ -1915,8 +1867,7 @@ static NSMutableArray *recentNonces;
  * This method is called immediately prior to sending the response headers.
  * This method adds standard header fields, and then converts the response to an NSData object.
 **/
-- (NSData *)preprocessResponse:(HTTPMessage *)response
-{
+- (NSData *)preprocessResponse:(HTTPMessage *)response {
 	HTTPLogTrace();
 	
 	// Override me to customize the response headers
@@ -1931,14 +1882,14 @@ static NSMutableArray *recentNonces;
 	
 	// Add optional response headers
 	if ([httpResponse respondsToSelector:@selector(httpHeaders)])
-	{
+	 {
 		NSDictionary *responseHeaders = [httpResponse httpHeaders];
 		
 		NSEnumerator *keyEnumerator = [responseHeaders keyEnumerator];
 		NSString *key;
 		
 		while ((key = [keyEnumerator nextObject]))
-		{
+		 {
 			NSString *value = [responseHeaders objectForKey:key];
 			
 			[response setHeaderField:key value:value];
@@ -1952,8 +1903,7 @@ static NSMutableArray *recentNonces;
  * This method is called immediately prior to sending the response headers (for an error).
  * This method adds standard header fields, and then converts the response to an NSData object.
 **/
-- (NSData *)preprocessErrorResponse:(HTTPMessage *)response
-{
+- (NSData *)preprocessErrorResponse:(HTTPMessage *)response {
 	HTTPLogTrace();
 	
 	// Override me to customize the error response headers
@@ -1984,14 +1934,14 @@ static NSMutableArray *recentNonces;
 	
 	// Add optional response headers
 	if ([httpResponse respondsToSelector:@selector(httpHeaders)])
-	{
+	 {
 		NSDictionary *responseHeaders = [httpResponse httpHeaders];
 		
 		NSEnumerator *keyEnumerator = [responseHeaders keyEnumerator];
 		NSString *key;
 		
 		while((key = [keyEnumerator nextObject]))
-		{
+		 {
 			NSString *value = [responseHeaders objectForKey:key];
 			
 			[response setHeaderField:key value:value];
@@ -2009,24 +1959,23 @@ static NSMutableArray *recentNonces;
  * This method is called after the socket has successfully read data from the stream.
  * Remember that this method will only be called after the socket reaches a CRLF, or after it's read the proper length.
 **/
-- (void)socket:(GCDAsyncSocket *)sock didReadData:(NSData*)data withTag:(long)tag
-{
+- (void)socket:(GCDAsyncSocket *)sock didReadData:(NSData*)data withTag:(long)tag {
 	if (tag == HTTP_REQUEST_HEADER)
-	{
+	 {
 		// Append the header line to the http message
 		BOOL result = [request appendData:data];
 		if (!result)
-		{
+		 {
 			HTTPLogWarn(@"%@[%p]: Malformed request", THIS_FILE, self);
 			
 			[self handleInvalidRequest:data];
 		}
 		else if (![request isHeaderComplete])
-		{
+		 {
 			// We don't have a complete header yet
 			// That is, we haven't yet received a CRLF on a line by itself, indicating the end of the header
 			if (++numHeaderLines > MAX_HEADER_LINES)
-			{
+			 {
 				// Reached the maximum amount of header lines in a single HTTP request
 				// This could be an attempted DOS attack
 				[asyncSocket disconnect];
@@ -2035,7 +1984,7 @@ static NSMutableArray *recentNonces;
 				return;
 			}
 			else
-			{
+			 {
 				[asyncSocket readDataToData:[GCDAsyncSocket CRLFData]
 				                withTimeout:TIMEOUT_READ_SUBSEQUENT_HEADER_LINE
 				                  maxLength:MAX_HEADER_LINE_LENGTH
@@ -2043,7 +1992,7 @@ static NSMutableArray *recentNonces;
 			}
 		}
 		else
-		{
+		 {
 			// We have an entire HTTP request header from the client
 			
 			// Extract the method (such as GET, HEAD, POST, etc)
@@ -2063,15 +2012,15 @@ static NSMutableArray *recentNonces;
 			BOOL expectsUpload = [self expectsRequestBodyFromMethod:method atPath:uri];
 			
 			if (expectsUpload)
-			{
+			 {
 				if (transferEncoding && ![transferEncoding caseInsensitiveCompare:@"Chunked"])
-				{
+				 {
 					requestContentLength = -1;
 				}
 				else
-				{
+				 {
 					if (contentLength == nil)
-					{
+					 {
 						HTTPLogWarn(@"%@[%p]: Method expects request body, but had no specified Content-Length",
 									THIS_FILE, self);
 						
@@ -2080,7 +2029,7 @@ static NSMutableArray *recentNonces;
 					}
 					
 					if (![NSNumber parseString:(NSString *)contentLength intoUInt64:&requestContentLength])
-					{
+					 {
 						HTTPLogWarn(@"%@[%p]: Unable to parse Content-Length header into a valid number",
 									THIS_FILE, self);
 						
@@ -2090,14 +2039,14 @@ static NSMutableArray *recentNonces;
 				}
 			}
 			else
-			{
+			 {
 				if (contentLength != nil)
-				{
+				 {
 					// Received Content-Length header for method not expecting an upload.
 					// This better be zero...
 					
 					if (![NSNumber parseString:(NSString *)contentLength intoUInt64:&requestContentLength])
-					{
+					 {
 						HTTPLogWarn(@"%@[%p]: Unable to parse Content-Length header into a valid number",
 									THIS_FILE, self);
 						
@@ -2106,7 +2055,7 @@ static NSMutableArray *recentNonces;
 					}
 					
 					if (requestContentLength > 0)
-					{
+					 {
 						HTTPLogWarn(@"%@[%p]: Method not expecting request body had non-zero Content-Length",
 									THIS_FILE, self);
 						
@@ -2121,7 +2070,7 @@ static NSMutableArray *recentNonces;
 			
 			// Check to make sure the given method is supported
 			if (![self supportsMethod:method atPath:uri])
-			{
+			 {
 				// The method is unsupported - either in general, or for this specific request
 				// Send a 405 - Method not allowed response
 				[self handleUnknownMethod:method];
@@ -2129,7 +2078,7 @@ static NSMutableArray *recentNonces;
 			}
 			
 			if (expectsUpload)
-			{
+			 {
 				// Reset the total amount of data received for the upload
 				requestContentLengthReceived = 0;
 				
@@ -2137,10 +2086,10 @@ static NSMutableArray *recentNonces;
 				[self prepareForBodyWithSize:requestContentLength];
 				
 				if (requestContentLength > 0)
-				{
+				 {
 					// Start reading the request body
 					if (requestContentLength == -1)
-					{
+					 {
 						// Chunked transfer
 						
 						[asyncSocket readDataToData:[GCDAsyncSocket CRLFData]
@@ -2149,7 +2098,7 @@ static NSMutableArray *recentNonces;
 						                        tag:HTTP_REQUEST_CHUNK_SIZE];
 					}
 					else
-					{
+					 {
 						NSUInteger bytesToRead;
 						if (requestContentLength < POST_CHUNKSIZE)
 							bytesToRead = (NSUInteger)requestContentLength;
@@ -2162,21 +2111,21 @@ static NSMutableArray *recentNonces;
 					}
 				}
 				else
-				{
+				 {
 					// Empty upload
 					[self finishBody];
 					[self replyToHTTPRequest];
 				}
 			}
 			else
-			{
+			 {
 				// Now we need to reply to the request
 				[self replyToHTTPRequest];
 			}
 		}
 	}
 	else
-	{
+	 {
 		BOOL doneReadingRequest = NO;
 		
 		// A chunked message body contains a series of chunks,
@@ -2198,7 +2147,7 @@ static NSMutableArray *recentNonces;
 		// The optional footers and blank line are represented by HTTP_REQUEST_CHUNK_FOOTER.
 		
 		if (tag == HTTP_REQUEST_CHUNK_SIZE)
-		{
+		 {
 			// We have just read in a line with the size of the chunk data, in hex, 
 			// possibly followed by a semicolon and extra parameters that can be ignored,
 			// and ending with CRLF.
@@ -2210,7 +2159,7 @@ static NSMutableArray *recentNonces;
 			requestChunkSizeReceived = 0;
 			
 			if (errno != 0)
-			{
+			 {
 				HTTPLogWarn(@"%@[%p]: Method expects chunk size, but received something else", THIS_FILE, self);
 				
 				[self handleInvalidRequest:nil];
@@ -2218,7 +2167,7 @@ static NSMutableArray *recentNonces;
 			}
 			
 			if (requestChunkSize > 0)
-			{
+			 {
 				NSUInteger bytesToRead;
 				bytesToRead = (requestChunkSize < POST_CHUNKSIZE) ? (NSUInteger)requestChunkSize : POST_CHUNKSIZE;
 				
@@ -2227,7 +2176,7 @@ static NSMutableArray *recentNonces;
 				                          tag:HTTP_REQUEST_CHUNK_DATA];
 			}
 			else
-			{
+			 {
 				// This is the "0" (zero) line,
 				// which is to be followed by optional footers (just like headers) and finally a blank line.
 				
@@ -2240,7 +2189,7 @@ static NSMutableArray *recentNonces;
 			return;
 		}
 		else if (tag == HTTP_REQUEST_CHUNK_DATA)
-		{
+		 {
 			// We just read part of the actual data.
 			
 			requestContentLengthReceived += [data length];
@@ -2250,7 +2199,7 @@ static NSMutableArray *recentNonces;
 			
 			UInt64 bytesLeft = requestChunkSize - requestChunkSizeReceived;
 			if (bytesLeft > 0)
-			{
+			 {
 				NSUInteger bytesToRead = (bytesLeft < POST_CHUNKSIZE) ? (NSUInteger)bytesLeft : POST_CHUNKSIZE;
 				
 				[asyncSocket readDataToLength:bytesToRead
@@ -2258,7 +2207,7 @@ static NSMutableArray *recentNonces;
 				                          tag:HTTP_REQUEST_CHUNK_DATA];
 			}
 			else
-			{
+			 {
 				// We've read in all the data for this chunk.
 				// The data is followed by a CRLF, which we need to read (and basically ignore)
 				
@@ -2270,12 +2219,12 @@ static NSMutableArray *recentNonces;
 			return;
 		}
 		else if (tag == HTTP_REQUEST_CHUNK_TRAILER)
-		{
+		 {
 			// This should be the CRLF following the data.
 			// Just ensure it's a CRLF.
 			
 			if (![data isEqualToData:[GCDAsyncSocket CRLFData]])
-			{
+			 {
 				HTTPLogWarn(@"%@[%p]: Method expects chunk trailer, but is missing", THIS_FILE, self);
 				
 				[self handleInvalidRequest:nil];
@@ -2291,9 +2240,9 @@ static NSMutableArray *recentNonces;
 			
 		}
 		else if (tag == HTTP_REQUEST_CHUNK_FOOTER)
-		{
+		 {
 			if (++numHeaderLines > MAX_HEADER_LINES)
-			{
+			 {
 				// Reached the maximum amount of header lines in a single HTTP request
 				// This could be an attempted DOS attack
 				[asyncSocket disconnect];
@@ -2303,7 +2252,7 @@ static NSMutableArray *recentNonces;
 			}
 			
 			if ([data length] > 2)
-			{
+			 {
 				// We read in a footer.
 				// In the future we may want to append these to the request.
 				// For now we ignore, and continue reading the footers, waiting for the final blank line.
@@ -2314,19 +2263,19 @@ static NSMutableArray *recentNonces;
 				                        tag:HTTP_REQUEST_CHUNK_FOOTER];
 			}
 			else
-			{
+			 {
 				doneReadingRequest = YES;
 			}
 		}
 		else  // HTTP_REQUEST_BODY
-		{
+		 {
 			// Handle a chunk of data from the POST body
 			
 			requestContentLengthReceived += [data length];
 			[self processBodyData:data];
 			
 			if (requestContentLengthReceived < requestContentLength)
-			{
+			 {
 				// We're not done reading the post body yet...
 				
 				UInt64 bytesLeft = requestContentLength - requestContentLengthReceived;
@@ -2338,7 +2287,7 @@ static NSMutableArray *recentNonces;
 				                          tag:HTTP_REQUEST_BODY];
 			}
 			else
-			{
+			 {
 				doneReadingRequest = YES;
 			}
 		}
@@ -2346,7 +2295,7 @@ static NSMutableArray *recentNonces;
 		// Now that the entire body has been received, we need to reply to the request
 		
 		if (doneReadingRequest)
-		{
+		 {
 			[self finishBody];
 			[self replyToHTTPRequest];
 		}
@@ -2356,12 +2305,11 @@ static NSMutableArray *recentNonces;
 /**
  * This method is called after the socket has successfully written data to the stream.
 **/
-- (void)socket:(GCDAsyncSocket *)sock didWriteDataWithTag:(long)tag
-{
+- (void)socket:(GCDAsyncSocket *)sock didWriteDataWithTag:(long)tag {
 	BOOL doneSendingResponse = NO;
 	
 	if (tag == HTTP_PARTIAL_RESPONSE_BODY)
-	{
+	 {
 		// Update the amount of data we have in asyncSocket's write queue
         if ([responseDataSizes count] > 0) {
             [responseDataSizes removeObjectAtIndex:0];
@@ -2371,7 +2319,7 @@ static NSMutableArray *recentNonces;
 		[self continueSendingStandardResponseBody];
 	}
 	else if (tag == HTTP_CHUNKED_RESPONSE_BODY)
-	{
+	 {
 		// Update the amount of data we have in asyncSocket's write queue.
 		// This will allow asynchronous responses to continue sending more data.
         if ([responseDataSizes count] > 0) {
@@ -2381,12 +2329,12 @@ static NSMutableArray *recentNonces;
 		// The chunked footer that was sent after the body will tell us if we have more data to send.
 	}
 	else if (tag == HTTP_CHUNKED_RESPONSE_FOOTER)
-	{
+	 {
 		// Normal chunked footer indicating we have more data to send (non final footer).
 		[self continueSendingStandardResponseBody];
 	}
 	else if (tag == HTTP_PARTIAL_RANGE_RESPONSE_BODY)
-	{
+	 {
 		// Update the amount of data we have in asyncSocket's write queue
         if ([responseDataSizes count] > 0) {
             [responseDataSizes removeObjectAtIndex:0];
@@ -2395,7 +2343,7 @@ static NSMutableArray *recentNonces;
 		[self continueSendingSingleRangeResponseBody];
 	}
 	else if (tag == HTTP_PARTIAL_RANGES_RESPONSE_BODY)
-	{
+	 {
 		// Update the amount of data we have in asyncSocket's write queue
         if ([responseDataSizes count] > 0) {
             [responseDataSizes removeObjectAtIndex:0];
@@ -2404,10 +2352,10 @@ static NSMutableArray *recentNonces;
 		[self continueSendingMultiRangeResponseBody];
 	}
 	else if (tag == HTTP_RESPONSE || tag == HTTP_FINAL_RESPONSE)
-	{
+	 {
 		// Update the amount of data we have in asyncSocket's write queue
 		if ([responseDataSizes count] > 0)
-		{
+		 {
 			[responseDataSizes removeObjectAtIndex:0];
 		}
 		
@@ -2415,16 +2363,16 @@ static NSMutableArray *recentNonces;
 	}
 	
 	if (doneSendingResponse)
-	{
+	 {
 		// Inform the http response that we're done
 		if ([httpResponse respondsToSelector:@selector(connectionDidClose)])
-		{
+		 {
 			[httpResponse connectionDidClose];
 		}
 		
 		
 		if (tag == HTTP_FINAL_RESPONSE)
-		{
+		 {
 			// Cleanup after the last request
 			[self finishResponse];
 			
@@ -2435,9 +2383,9 @@ static NSMutableArray *recentNonces;
 			return;
 		}
 		else
-		{
+		 {
 			if ([self shouldDie])
-			{
+			 {
 				// Cleanup after the last request
 				// Note: Don't do this before calling shouldDie, as it needs the request object still.
 				[self finishResponse];
@@ -2448,7 +2396,7 @@ static NSMutableArray *recentNonces;
 				[asyncSocket disconnect];
 			}
 			else
-			{
+			 {
 				// Cleanup after the last request
 				[self finishResponse];
 				
@@ -2473,8 +2421,7 @@ static NSMutableArray *recentNonces;
 /**
  * Sent after the socket has been disconnected.
 **/
-- (void)socketDidDisconnect:(GCDAsyncSocket *)sock withError:(NSError *)err
-{
+- (void)socketDidDisconnect:(GCDAsyncSocket *)sock withError:(NSError *)err {
 	HTTPLogTrace();
 	
 	asyncSocket = nil;
@@ -2492,8 +2439,7 @@ static NSMutableArray *recentNonces;
  * 
  * This informs us that the response object has generated more data that we may be able to send.
 **/
-- (void)responseHasAvailableData:(NSObject<HTTPResponse> *)sender
-{
+- (void)responseHasAvailableData:(NSObject<HTTPResponse> *)sender {
 	HTTPLogTrace();
 	
 	// We always dispatch this asynchronously onto our connectionQueue,
@@ -2502,26 +2448,26 @@ static NSMutableArray *recentNonces;
 	// We do this to give the HTTPResponse classes the flexibility to call
 	// this method whenever they want, even from within a readDataOfLength method.
 	
-	dispatch_async(connectionQueue, ^{ @autoreleasepool {
+	dispatch_async(connectionQueue, ^ { @autoreleasepool {
 		
 		if (sender != httpResponse)
-		{
+		 {
 			HTTPLogWarn(@"%@[%p]: %@ - Sender is not current httpResponse", THIS_FILE, self, THIS_METHOD);
 			return;
 		}
 		
 		if (!sentResponseHeaders)
-		{
+		 {
 			[self sendResponseHeadersAndBody];
 		}
 		else
-		{
+		 {
 			if (ranges == nil)
-			{
+			 {
 				[self continueSendingStandardResponseBody];
 			}
 			else
-			{
+			 {
 				if ([ranges count] == 1)
 					[self continueSendingSingleRangeResponseBody];
 				else
@@ -2535,8 +2481,7 @@ static NSMutableArray *recentNonces;
  * This method is called if the response encounters some critical error,
  * and it will be unable to fullfill the request.
 **/
-- (void)responseDidAbort:(NSObject<HTTPResponse> *)sender
-{
+- (void)responseDidAbort:(NSObject<HTTPResponse> *)sender {
 	HTTPLogTrace();
 	
 	// We always dispatch this asynchronously onto our connectionQueue,
@@ -2545,10 +2490,10 @@ static NSMutableArray *recentNonces;
 	// We do this to give the HTTPResponse classes the flexibility to call
 	// this method whenever they want, even from within a readDataOfLength method.
 	
-	dispatch_async(connectionQueue, ^{ @autoreleasepool {
+	dispatch_async(connectionQueue, ^ { @autoreleasepool {
 		
 		if (sender != httpResponse)
-		{
+		 {
 			HTTPLogWarn(@"%@[%p]: %@ - Sender is not current httpResponse", THIS_FILE, self, THIS_METHOD);
 			return;
 		}
@@ -2566,8 +2511,7 @@ static NSMutableArray *recentNonces;
  * Since a single connection may handle multiple request/responses, this method may be called multiple times.
  * That is, it will be called after completion of each response.
 **/
-- (void)finishResponse
-{
+- (void)finishResponse {
 	HTTPLogTrace();
 	
 	// Override me if you want to perform any custom actions after a response has been fully sent.
@@ -2588,8 +2532,7 @@ static NSMutableArray *recentNonces;
  * This method is called after each successful response has been fully sent.
  * It determines whether the connection should stay open and handle another request.
 **/
-- (BOOL)shouldDie
-{
+- (BOOL)shouldDie {
 	HTTPLogTrace();
 	
 	// Override me if you have any need to force close the connection.
@@ -2603,7 +2546,7 @@ static NSMutableArray *recentNonces;
 	
 	NSString *version = [request version];
 	if ([version isEqualToString:HTTPVersion1_1])
-	{
+	 {
 		// HTTP version 1.1
 		// Connection should only be closed if request included "Connection: close" header
 		
@@ -2612,7 +2555,7 @@ static NSMutableArray *recentNonces;
 		shouldDie = (connection && ([connection caseInsensitiveCompare:@"close"] == NSOrderedSame));
 	}
 	else if ([version isEqualToString:HTTPVersion1_0])
-	{
+	 {
 		// HTTP version 1.0
 		// Connection should be closed unless request included "Connection: Keep-Alive" header
 		
@@ -2627,8 +2570,7 @@ static NSMutableArray *recentNonces;
 	return shouldDie;
 }
 
-- (void)die
-{
+- (void)die {
 	HTTPLogTrace();
 	
 	// Override me if you want to perform any custom actions when a connection is closed.
@@ -2641,7 +2583,7 @@ static NSMutableArray *recentNonces;
 	
 	// Inform the http response that we're done
 	if ([httpResponse respondsToSelector:@selector(connectionDidClose)])
-	{
+	 {
 		[httpResponse connectionDidClose];
 	}
 	
@@ -2665,30 +2607,28 @@ static NSMutableArray *recentNonces;
 @synthesize documentRoot;
 @synthesize queue;
 
-- (id)initWithServer:(HTTPServer *)aServer documentRoot:(NSString *)aDocumentRoot
-{
+- (id)initWithServer:(HTTPServer *)aServer documentRoot:(NSString *)aDocumentRoot {
 	if ((self = [super init]))
-	{
+	 {
 		server = aServer;
 		documentRoot = aDocumentRoot;
 	}
 	return self;
 }
 
-- (id)initWithServer:(HTTPServer *)aServer documentRoot:(NSString *)aDocumentRoot queue:(dispatch_queue_t)q
-{
+- (id)initWithServer:(HTTPServer *)aServer documentRoot:(NSString *)aDocumentRoot queue:(dispatch_queue_t)q {
 	if ((self = [super init]))
-	{
+	 {
 		server = aServer;
 		
 		documentRoot = [aDocumentRoot stringByStandardizingPath];
 		if ([documentRoot hasSuffix:@"/"])
-		{
+		 {
 			documentRoot = [documentRoot stringByAppendingString:@"/"];
 		}
 		
 		if (q)
-		{
+		 {
 			queue = q;
 			#if !OS_OBJECT_USE_OBJC
 			dispatch_retain(queue);
@@ -2698,8 +2638,7 @@ static NSMutableArray *recentNonces;
 	return self;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
 	#if !OS_OBJECT_USE_OBJC
 	if (queue) dispatch_release(queue);
 	#endif

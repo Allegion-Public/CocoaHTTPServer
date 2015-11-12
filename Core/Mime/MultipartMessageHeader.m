@@ -29,7 +29,7 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN;
 
 
 - (id) initWithData:(NSData *)data formEncoding:(NSStringEncoding) formEncoding {
-	if( nil == (self = [super init]) ) {
+	if ( nil == (self = [super init]) ) {
         return self;
     }
 	
@@ -45,12 +45,11 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN;
 	// split header into header fields, separated by \r\n
 	uint16_t fields_separator = 0x0A0D; // \r\n
 	while( offset < length - 2 ) {
-
 		// the !isspace condition is to support header unfolding
-		if( (*(uint16_t*) (bytes+offset)  == fields_separator) && ((offset == length - 2) || !(isspace(bytes[offset+2])) )) {
+		if ( (*(uint16_t*) (bytes+offset)  == fields_separator) && ((offset == length - 2) || !(isspace(bytes[offset+2])) )) {
 			NSData* fieldData = [NSData dataWithBytesNoCopy:bytes length:offset freeWhenDone:NO];
 			MultipartMessageHeaderField* field = [[MultipartMessageHeaderField alloc] initWithData: fieldData  contentEncoding:formEncoding];
-			if( field ) {
+			if ( field ) {
 				[fields setObject:field forKey:field.name];
 				HTTPLogVerbose(@"MultipartFormDataParser: Processed Header field '%@'",field.name);
 			}
@@ -68,7 +67,7 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN;
 		++ offset;
 	}
 	
-	if( !fields.count ) {
+	if ( !fields.count ) {
 		// it was an empty header.
 		// we have to set default values.
 		// default header.

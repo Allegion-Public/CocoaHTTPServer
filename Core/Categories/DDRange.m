@@ -1,8 +1,7 @@
 #import "DDRange.h"
 #import "DDNumber.h"
 
-DDRange DDUnionRange(DDRange range1, DDRange range2)
-{
+DDRange DDUnionRange(DDRange range1, DDRange range2) {
 	DDRange result;
 	
 	result.location = MIN(range1.location, range2.location);
@@ -11,12 +10,11 @@ DDRange DDUnionRange(DDRange range1, DDRange range2)
 	return result;
 }
 
-DDRange DDIntersectionRange(DDRange range1, DDRange range2)
-{
+DDRange DDIntersectionRange(DDRange range1, DDRange range2) {
 	DDRange result;
 	
-	if((DDMaxRange(range1) < range2.location) || (DDMaxRange(range2) < range1.location))
-	{
+	if ((DDMaxRange(range1) < range2.location) || (DDMaxRange(range2) < range1.location))
+	 {
 		return DDMakeRange(0, 0);
 	}
 	
@@ -26,13 +24,11 @@ DDRange DDIntersectionRange(DDRange range1, DDRange range2)
 	return result;
 }
 
-NSString *DDStringFromRange(DDRange range)
-{
-	return [NSString stringWithFormat:@"{%qu, %qu}", range.location, range.length];
+NSString *DDStringFromRange(DDRange range) {
+	return [NSString stringWithFormat:@" {%qu, %qu}", range.location, range.length];
 }
 
-DDRange DDRangeFromString(NSString *aString)
-{
+DDRange DDRangeFromString(NSString *aString) {
 	DDRange result = DDMakeRange(0, 0);
 	
 	// NSRange will ignore '-' characters, but not '+' characters
@@ -47,32 +43,31 @@ DDRange DDRangeFromString(NSString *aString)
 	BOOL found1 = [scanner scanCharactersFromSet:cset intoString:&str1];
 	BOOL found2 = [scanner scanCharactersFromSet:cset intoString:&str2];
 	
-	if(found1) [NSNumber parseString:str1 intoUInt64:&result.location];
-	if(found2) [NSNumber parseString:str2 intoUInt64:&result.length];
+	if (found1) [NSNumber parseString:str1 intoUInt64:&result.location];
+	if (found2) [NSNumber parseString:str2 intoUInt64:&result.length];
 	
 	return result;
 }
 
-NSInteger DDRangeCompare(DDRangePointer pDDRange1, DDRangePointer pDDRange2)
-{
+NSInteger DDRangeCompare(DDRangePointer pDDRange1, DDRangePointer pDDRange2) {
 	// Comparison basis:
 	// Which range would you encouter first if you started at zero, and began walking towards infinity.
 	// If you encouter both ranges at the same time, which range would end first.
 	
-	if(pDDRange1->location < pDDRange2->location)
-	{
+	if (pDDRange1->location < pDDRange2->location)
+	 {
 		return NSOrderedAscending;
 	}
-	if(pDDRange1->location > pDDRange2->location)
-	{
+	if (pDDRange1->location > pDDRange2->location)
+	 {
 		return NSOrderedDescending;
 	}
-	if(pDDRange1->length < pDDRange2->length)
-	{
+	if (pDDRange1->length < pDDRange2->length)
+	 {
 		return NSOrderedAscending;
 	}
-	if(pDDRange1->length > pDDRange2->length)
-	{
+	if (pDDRange1->length > pDDRange2->length)
+	 {
 		return NSOrderedDescending;
 	}
 	
@@ -81,20 +76,17 @@ NSInteger DDRangeCompare(DDRangePointer pDDRange1, DDRangePointer pDDRange2)
 
 @implementation NSValue (NSValueDDRangeExtensions)
 
-+ (NSValue *)valueWithDDRange:(DDRange)range
-{
++ (NSValue *)valueWithDDRange:(DDRange)range {
 	return [NSValue valueWithBytes:&range objCType:@encode(DDRange)];
 }
 
-- (DDRange)ddrangeValue
-{
+- (DDRange)ddrangeValue {
 	DDRange result;
 	[self getValue:&result];
 	return result;
 }
 
-- (NSInteger)ddrangeCompare:(NSValue *)other
-{
+- (NSInteger)ddrangeCompare:(NSValue *)other {
 	DDRange r1 = [self ddrangeValue];
 	DDRange r2 = [other ddrangeValue];
 	

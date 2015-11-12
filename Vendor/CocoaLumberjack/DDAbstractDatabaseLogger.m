@@ -24,10 +24,9 @@
 
 @implementation DDAbstractDatabaseLogger
 
-- (id)init
-{
+- (id)init {
 	if ((self = [super init]))
-	{
+	 {
         saveThreshold = 500;
 		saveInterval = 60;           // 60 seconds
 		maxAge = (60 * 60 * 24 * 7); //  7 days
@@ -36,8 +35,7 @@
 	return self;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
 	[self destroySaveTimer];
 	[self destroyDeleteTimer];
 	
@@ -47,8 +45,7 @@
 #pragma mark Override Me
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-- (BOOL)db_log:(DDLogMessage *)logMessage
-{
+- (BOOL)db_log:(DDLogMessage *)logMessage {
 	// Override me and add your implementation.
 	// 
 	// Return YES if an item was added to the buffer.
@@ -57,18 +54,15 @@
 	return NO;
 }
 
-- (void)db_save
-{
+- (void)db_save {
 	// Override me and add your implementation.
 }
 
-- (void)db_delete
-{
+- (void)db_delete {
 	// Override me and add your implementation.
 }
 
-- (void)db_saveAndDelete
-{
+- (void)db_saveAndDelete {
 	// Override me and add your implementation.
 }
 
@@ -76,10 +70,9 @@
 #pragma mark Private API
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-- (void)performSaveAndSuspendSaveTimer
-{
+- (void)performSaveAndSuspendSaveTimer {
 	if (unsavedCount > 0)
-	{
+	 {
 		if (deleteOnEverySave)
 			[self db_saveAndDelete];
 		else
@@ -90,16 +83,15 @@
 	unsavedTime = 0;
 	
 	if (saveTimer && !saveTimerSuspended)
-	{
+	 {
 		dispatch_suspend(saveTimer);
 		saveTimerSuspended = YES;
 	}
 }
 
-- (void)performDelete
-{
+- (void)performDelete {
 	if (maxAge > 0.0)
-	{
+	 {
 		[self db_delete];
 		
 		lastDeleteTime = dispatch_time(DISPATCH_TIME_NOW, 0);
@@ -110,13 +102,12 @@
 #pragma mark Timers
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-- (void)destroySaveTimer
-{
+- (void)destroySaveTimer {
 	if (saveTimer)
-	{
+	 {
 		dispatch_source_cancel(saveTimer);
 		if (saveTimerSuspended)
-		{
+		 {
 			// Must resume a timer before releasing it (or it will crash)
 			dispatch_resume(saveTimer);
 			saveTimerSuspended = NO;
@@ -128,30 +119,28 @@
 	}
 }
 
-- (void)updateAndResumeSaveTimer
-{
+- (void)updateAndResumeSaveTimer {
 	if ((saveTimer != NULL) && (saveInterval > 0.0) && (unsavedTime > 0.0))
-	{
+	 {
 		uint64_t interval = (uint64_t)(saveInterval * NSEC_PER_SEC);
 		dispatch_time_t startTime = dispatch_time(unsavedTime, interval);
 		
 		dispatch_source_set_timer(saveTimer, startTime, interval, 1.0);
 		
 		if (saveTimerSuspended)
-		{
+		 {
 			dispatch_resume(saveTimer);
 			saveTimerSuspended = NO;
 		}
 	}
 }
 
-- (void)createSuspendedSaveTimer
-{
+- (void)createSuspendedSaveTimer {
 	if ((saveTimer == NULL) && (saveInterval > 0.0))
-	{
+	 {
 		saveTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, loggerQueue);
 		
-		dispatch_source_set_event_handler(saveTimer, ^{ @autoreleasepool {
+		dispatch_source_set_event_handler(saveTimer, ^ { @autoreleasepool {
 			
 			[self performSaveAndSuspendSaveTimer];
 			
@@ -161,10 +150,9 @@
 	}
 }
 
-- (void)destroyDeleteTimer
-{
+- (void)destroyDeleteTimer {
 	if (deleteTimer)
-	{
+	 {
 		dispatch_source_cancel(deleteTimer);
 		#if !OS_OBJECT_USE_OBJC
 		dispatch_release(deleteTimer);
@@ -173,10 +161,9 @@
 	}
 }
 
-- (void)updateDeleteTimer
-{
+- (void)updateDeleteTimer {
 	if ((deleteTimer != NULL) && (deleteInterval > 0.0) && (maxAge > 0.0))
-	{
+	 {
 		uint64_t interval = (uint64_t)(deleteInterval * NSEC_PER_SEC);
 		dispatch_time_t startTime;
 		
@@ -189,15 +176,13 @@
 	}
 }
 
-- (void)createAndStartDeleteTimer
-{
+- (void)createAndStartDeleteTimer {
 	if ((deleteTimer == NULL) && (deleteInterval > 0.0) && (maxAge > 0.0))
-	{
+	 {
 		deleteTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, loggerQueue);
 
         if (deleteTimer != NULL) {
-            dispatch_source_set_event_handler(deleteTimer, ^{ @autoreleasepool {
-
+            dispatch_source_set_event_handler(deleteTimer, ^ { @autoreleasepool {
                 [self performDelete];
 
             }});
@@ -213,8 +198,7 @@
 #pragma mark Configuration
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-- (NSUInteger)saveThreshold
-{
+- (NSUInteger)saveThreshold {
 	// The design of this method is taken from the DDAbstractLogger implementation.
 	// For extensive documentation please refer to the DDAbstractLogger implementation.
 	
@@ -232,8 +216,8 @@
 	
 	__block NSUInteger result;
 	
-	dispatch_sync(globalLoggingQueue, ^{
-		dispatch_sync(loggerQueue, ^{
+	dispatch_sync(globalLoggingQueue, ^ {
+		dispatch_sync(loggerQueue, ^ {
 			result = saveThreshold;
 		});
 	});
@@ -241,12 +225,11 @@
 	return result;
 }
 
-- (void)setSaveThreshold:(NSUInteger)threshold
-{
-	dispatch_block_t block = ^{ @autoreleasepool {
+- (void)setSaveThreshold:(NSUInteger)threshold {
+	dispatch_block_t block = ^ { @autoreleasepool {
 		
 		if (saveThreshold != threshold)
-		{
+		 {
 			saveThreshold = threshold;
 			
 			// Since the saveThreshold has changed,
@@ -255,7 +238,7 @@
 			// If it has, we immediately save the log.
 			
 			if ((unsavedCount >= saveThreshold) && (saveThreshold > 0))
-			{
+			 {
 				[self performSaveAndSuspendSaveTimer];
 			}
 		}
@@ -265,22 +248,21 @@
 	// For documentation please refer to the DDAbstractLogger implementation.
 	
 	if ([self isOnInternalLoggerQueue])
-	{
+	 {
 		block();
 	}
 	else
-	{
+	 {
 		dispatch_queue_t globalLoggingQueue = [DDLog loggingQueue];
 		NSAssert(![self isOnGlobalLoggingQueue], @"Core architecture requirement failure");
 		
-		dispatch_async(globalLoggingQueue, ^{
+		dispatch_async(globalLoggingQueue, ^ {
 			dispatch_async(loggerQueue, block);
 		});
 	}
 }
 
-- (NSTimeInterval)saveInterval
-{
+- (NSTimeInterval)saveInterval {
 	// The design of this method is taken from the DDAbstractLogger implementation.
 	// For extensive documentation please refer to the DDAbstractLogger implementation.
 	
@@ -298,8 +280,8 @@
 	
 	__block NSTimeInterval result;
 	
-	dispatch_sync(globalLoggingQueue, ^{
-		dispatch_sync(loggerQueue, ^{
+	dispatch_sync(globalLoggingQueue, ^ {
+		dispatch_sync(loggerQueue, ^ {
 			result = saveInterval;
 		});
 	});
@@ -307,15 +289,14 @@
 	return result;
 }
 
-- (void)setSaveInterval:(NSTimeInterval)interval
-{
-	dispatch_block_t block = ^{ @autoreleasepool {
+- (void)setSaveInterval:(NSTimeInterval)interval {
+	dispatch_block_t block = ^ { @autoreleasepool {
 	
 		// C99 recommended floating point comparison macro
 		// Read: isLessThanOrGreaterThan(floatA, floatB)
 		
 		if (/* saveInterval != interval */ islessgreater(saveInterval, interval))
-		{
+		 {
 			saveInterval = interval;
 			
 			// There are several cases we need to handle here.
@@ -332,9 +313,9 @@
 			//    (Plus we might need to do an immediate save.)
 			
 			if (saveInterval > 0.0)
-			{
+			 {
 				if (saveTimer == NULL)
-				{
+				 {
 					// Handles #2
 					//
 					// Since the saveTimer uses the unsavedTime to calculate it's first fireDate,
@@ -344,7 +325,7 @@
 					[self updateAndResumeSaveTimer];
 				}
 				else
-				{
+				 {
 					// Handles #3
 					// Handles #4
 					//
@@ -355,7 +336,7 @@
 				}
 			}
 			else if (saveTimer)
-			{
+			 {
 				// Handles #1
 				
 				[self destroySaveTimer];
@@ -367,22 +348,21 @@
 	// For documentation please refer to the DDAbstractLogger implementation.
 	
 	if ([self isOnInternalLoggerQueue])
-	{
+	 {
 		block();
 	}
 	else
-	{
+	 {
 		dispatch_queue_t globalLoggingQueue = [DDLog loggingQueue];
 		NSAssert(![self isOnGlobalLoggingQueue], @"Core architecture requirement failure");
 		
-		dispatch_async(globalLoggingQueue, ^{
+		dispatch_async(globalLoggingQueue, ^ {
 			dispatch_async(loggerQueue, block);
 		});
 	}
 }
 
-- (NSTimeInterval)maxAge
-{
+- (NSTimeInterval)maxAge {
 	// The design of this method is taken from the DDAbstractLogger implementation.
 	// For extensive documentation please refer to the DDAbstractLogger implementation.
 	
@@ -400,8 +380,8 @@
 	
 	__block NSTimeInterval result;
 	
-	dispatch_sync(globalLoggingQueue, ^{
-		dispatch_sync(loggerQueue, ^{
+	dispatch_sync(globalLoggingQueue, ^ {
+		dispatch_sync(loggerQueue, ^ {
 			result = maxAge;
 		});
 	});
@@ -409,15 +389,14 @@
 	return result;
 }
 
-- (void)setMaxAge:(NSTimeInterval)interval
-{
-	dispatch_block_t block = ^{ @autoreleasepool {
+- (void)setMaxAge:(NSTimeInterval)interval {
+	dispatch_block_t block = ^ { @autoreleasepool {
 		
 		// C99 recommended floating point comparison macro
 		// Read: isLessThanOrGreaterThan(floatA, floatB)
 		
 		if (/* maxAge != interval */ islessgreater(maxAge, interval))
-		{
+		 {
 			NSTimeInterval oldMaxAge = maxAge;
 			NSTimeInterval newMaxAge = interval;
 			
@@ -440,27 +419,27 @@
 			BOOL shouldDeleteNow = NO;
 			
 			if (oldMaxAge > 0.0)
-			{
+			 {
 				if (newMaxAge <= 0.0)
-				{
+				 {
 					// Handles #1
 					
 					[self destroyDeleteTimer];
 				}
 				else if (oldMaxAge > newMaxAge)
-				{
+				 {
 					// Handles #4
 					shouldDeleteNow = YES;
 				}
 			}
 			else if (newMaxAge > 0.0)
-			{
+			 {
 				// Handles #2
 				shouldDeleteNow = YES;
 			}
 			
 			if (shouldDeleteNow)
-			{
+			 {
 				[self performDelete];
 				
 				if (deleteTimer)
@@ -475,22 +454,21 @@
 	// For documentation please refer to the DDAbstractLogger implementation.
 	
 	if ([self isOnInternalLoggerQueue])
-	{
+	 {
 		block();
 	}
 	else
-	{
+	 {
 		dispatch_queue_t globalLoggingQueue = [DDLog loggingQueue];
 		NSAssert(![self isOnGlobalLoggingQueue], @"Core architecture requirement failure");
 		
-		dispatch_async(globalLoggingQueue, ^{
+		dispatch_async(globalLoggingQueue, ^ {
 			dispatch_async(loggerQueue, block);
 		});
 	}
 }
 
-- (NSTimeInterval)deleteInterval
-{
+- (NSTimeInterval)deleteInterval {
 	// The design of this method is taken from the DDAbstractLogger implementation.
 	// For extensive documentation please refer to the DDAbstractLogger implementation.
 	
@@ -508,8 +486,8 @@
 	
 	__block NSTimeInterval result;
 	
-	dispatch_sync(globalLoggingQueue, ^{
-		dispatch_sync(loggerQueue, ^{
+	dispatch_sync(globalLoggingQueue, ^ {
+		dispatch_sync(loggerQueue, ^ {
 			result = deleteInterval;
 		});
 	});
@@ -517,15 +495,14 @@
 	return result;
 }
 
-- (void)setDeleteInterval:(NSTimeInterval)interval
-{
-	dispatch_block_t block = ^{ @autoreleasepool {
+- (void)setDeleteInterval:(NSTimeInterval)interval {
+	dispatch_block_t block = ^ { @autoreleasepool {
 		
 		// C99 recommended floating point comparison macro
 		// Read: isLessThanOrGreaterThan(floatA, floatB)
 		
 		if (/* deleteInterval != interval */ islessgreater(deleteInterval, interval))
-		{
+		 {
 			deleteInterval = interval;
 			
 			// There are several cases we need to handle here.
@@ -542,9 +519,9 @@
 			//    (Plus we might need to do an immediate delete.)
 			
 			if (deleteInterval > 0.0)
-			{
+			 {
 				if (deleteTimer == NULL)
-				{
+				 {
 					// Handles #2
 					//
 					// Since the deleteTimer uses the lastDeleteTime to calculate it's first fireDate,
@@ -553,7 +530,7 @@
 					[self createAndStartDeleteTimer];
 				}
 				else
-				{
+				 {
 					// Handles #3
 					// Handles #4
 					//
@@ -564,7 +541,7 @@
 				}
 			}
 			else if (deleteTimer)
-			{
+			 {
 				// Handles #1
 				
 				[self destroyDeleteTimer];
@@ -576,22 +553,21 @@
 	// For documentation please refer to the DDAbstractLogger implementation.
 	
 	if ([self isOnInternalLoggerQueue])
-	{
+	 {
 		block();
 	}
 	else
-	{
+	 {
 		dispatch_queue_t globalLoggingQueue = [DDLog loggingQueue];
 		NSAssert(![self isOnGlobalLoggingQueue], @"Core architecture requirement failure");
 		
-		dispatch_async(globalLoggingQueue, ^{
+		dispatch_async(globalLoggingQueue, ^ {
 			dispatch_async(loggerQueue, block);
 		});
 	}
 }
 
-- (BOOL)deleteOnEverySave
-{
+- (BOOL)deleteOnEverySave {
 	// The design of this method is taken from the DDAbstractLogger implementation.
 	// For extensive documentation please refer to the DDAbstractLogger implementation.
 	
@@ -609,8 +585,8 @@
 	
 	__block BOOL result;
 	
-	dispatch_sync(globalLoggingQueue, ^{
-		dispatch_sync(loggerQueue, ^{
+	dispatch_sync(globalLoggingQueue, ^ {
+		dispatch_sync(loggerQueue, ^ {
 			result = deleteOnEverySave;
 		});
 	});
@@ -618,9 +594,8 @@
 	return result;
 }
 
-- (void)setDeleteOnEverySave:(BOOL)flag
-{
-	dispatch_block_t block = ^{
+- (void)setDeleteOnEverySave:(BOOL)flag {
+	dispatch_block_t block = ^ {
 		
 		deleteOnEverySave = flag;
 	};
@@ -629,15 +604,15 @@
 	// For documentation please refer to the DDAbstractLogger implementation.
 	
 	if ([self isOnInternalLoggerQueue])
-	{
+	 {
 		block();
 	}
 	else
-	{
+	 {
 		dispatch_queue_t globalLoggingQueue = [DDLog loggingQueue];
 		NSAssert(![self isOnGlobalLoggingQueue], @"Core architecture requirement failure");
 		
-		dispatch_async(globalLoggingQueue, ^{
+		dispatch_async(globalLoggingQueue, ^ {
 			dispatch_async(loggerQueue, block);
 		});
 	}
@@ -647,9 +622,8 @@
 #pragma mark Public API
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-- (void)savePendingLogEntries
-{
-	dispatch_block_t block = ^{ @autoreleasepool {
+- (void)savePendingLogEntries {
+	dispatch_block_t block = ^ { @autoreleasepool {
 		
 		[self performSaveAndSuspendSaveTimer];
 	}};
@@ -660,9 +634,8 @@
 		dispatch_async(loggerQueue, block);
 }
 
-- (void)deleteOldLogEntries
-{
-	dispatch_block_t block = ^{ @autoreleasepool {
+- (void)deleteOldLogEntries {
+	dispatch_block_t block = ^ { @autoreleasepool {
 		
 		[self performDelete];
 	}};
@@ -677,8 +650,7 @@
 #pragma mark DDLogger
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-- (void)didAddLogger
-{
+- (void)didAddLogger {
 	// If you override me be sure to invoke [super didAddLogger];
 	
 	[self createSuspendedSaveTimer];
@@ -686,8 +658,7 @@
 	[self createAndStartDeleteTimer];
 }
 
-- (void)willRemoveLogger
-{
+- (void)willRemoveLogger {
 	// If you override me be sure to invoke [super willRemoveLogger];
 	
 	[self performSaveAndSuspendSaveTimer];
@@ -696,26 +667,24 @@
 	[self destroyDeleteTimer];
 }
 
-- (void)logMessage:(DDLogMessage *)logMessage
-{
+- (void)logMessage:(DDLogMessage *)logMessage {
 	if ([self db_log:logMessage])
-	{
+	 {
 		BOOL firstUnsavedEntry = (++unsavedCount == 1);
 		
 		if ((unsavedCount >= saveThreshold) && (saveThreshold > 0))
-		{
+		 {
 			[self performSaveAndSuspendSaveTimer];
 		}
 		else if (firstUnsavedEntry)
-		{
+		 {
 			unsavedTime = dispatch_time(DISPATCH_TIME_NOW, 0);
 			[self updateAndResumeSaveTimer];
 		}
 	}
 }
 
-- (void)flush
-{
+- (void)flush {
 	// This method is invoked by DDLog's flushLog method.
 	// 
 	// It is called automatically when the application quits,

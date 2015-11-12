@@ -10,39 +10,35 @@ static char encodingTable[64] = {
 'g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v',
 'w','x','y','z','0','1','2','3','4','5','6','7','8','9','+','/' };
 
-- (NSData *)md5Digest
-{
+- (NSData *)md5Digest {
 	unsigned char result[CC_MD5_DIGEST_LENGTH];
     
     CC_MD5([self bytes], (CC_LONG)[self length], result);
     return [NSData dataWithBytes:result length:CC_MD5_DIGEST_LENGTH];
 }
 
-- (NSData *)sha1Digest
-{
+- (NSData *)sha1Digest {
 	unsigned char result[CC_SHA1_DIGEST_LENGTH];
     
 	CC_SHA1([self bytes], (CC_LONG)[self length], result);
     return [NSData dataWithBytes:result length:CC_SHA1_DIGEST_LENGTH];
 }
 
-- (NSString *)hexStringValue
-{
+- (NSString *)hexStringValue {
 	NSMutableString *stringBuffer = [NSMutableString stringWithCapacity:([self length] * 2)];
 	
     const unsigned char *dataBuffer = [self bytes];
     int i;
     
     for (i = 0; i < [self length]; ++i)
-	{
+	 {
         [stringBuffer appendFormat:@"%02x", (unsigned int)dataBuffer[i]];
 	}
     
     return [stringBuffer copy];
 }
 
-- (NSString *)base64Encoded
-{
+- (NSString *)base64Encoded {
 	const unsigned char	*bytes = [self bytes];
 	NSMutableString *result = [NSMutableString stringWithCapacity:[self length]];
 	unsigned long ixtext = 0;
@@ -54,13 +50,13 @@ static char encodingTable[64] = {
 	unsigned long ix = 0;
 	
 	while( YES )
-	{
+	 {
 		ctremaining = lentext - ixtext;
-		if( ctremaining <= 0 ) break;
+		if ( ctremaining <= 0 ) break;
 		
 		for( i = 0; i < 3; i++ ) {
 			ix = ixtext + i;
-			if( ix < lentext ) inbuf[i] = bytes[ix];
+			if ( ix < lentext ) inbuf[i] = bytes[ix];
 			else inbuf [i] = 0;
 		}
 		
@@ -71,7 +67,7 @@ static char encodingTable[64] = {
 		ctcopy = 4;
 		
 		switch( ctremaining )
-		{
+		 {
 			case 1:
 				ctcopy = 2;
 				break;
@@ -93,8 +89,7 @@ static char encodingTable[64] = {
 	return [NSString stringWithString:result];
 }
 
-- (NSData *)base64Decoded
-{
+- (NSData *)base64Decoded {
 	const unsigned char	*bytes = [self bytes];
 	NSMutableData *result = [NSMutableData dataWithCapacity:[self length]];
 	
@@ -108,28 +103,28 @@ static char encodingTable[64] = {
 	BOOL flendtext = NO;
 	
 	while( YES )
-	{
-		if( ixtext >= lentext ) break;
+	 {
+		if ( ixtext >= lentext ) break;
 		ch = bytes[ixtext++];
 		flignore = NO;
 		
-		if( ( ch >= 'A' ) && ( ch <= 'Z' ) ) ch = ch - 'A';
-		else if( ( ch >= 'a' ) && ( ch <= 'z' ) ) ch = ch - 'a' + 26;
-		else if( ( ch >= '0' ) && ( ch <= '9' ) ) ch = ch - '0' + 52;
-		else if( ch == '+' ) ch = 62;
-		else if( ch == '=' ) flendtext = YES;
-		else if( ch == '/' ) ch = 63;
+		if ( ( ch >= 'A' ) && ( ch <= 'Z' ) ) ch = ch - 'A';
+		else if ( ( ch >= 'a' ) && ( ch <= 'z' ) ) ch = ch - 'a' + 26;
+		else if ( ( ch >= '0' ) && ( ch <= '9' ) ) ch = ch - '0' + 52;
+		else if ( ch == '+' ) ch = 62;
+		else if ( ch == '=' ) flendtext = YES;
+		else if ( ch == '/' ) ch = 63;
 		else flignore = YES;
 		
-		if( ! flignore )
-		{
+		if ( ! flignore )
+		 {
 			short ctcharsinbuf = 3;
 			BOOL flbreak = NO;
 			
-			if( flendtext )
-			{
-				if( ! ixinbuf ) break;
-				if( ( ixinbuf == 1 ) || ( ixinbuf == 2 ) ) ctcharsinbuf = 1;
+			if ( flendtext )
+			 {
+				if ( ! ixinbuf ) break;
+				if ( ( ixinbuf == 1 ) || ( ixinbuf == 2 ) ) ctcharsinbuf = 1;
 				else ctcharsinbuf = 2;
 				ixinbuf = 3;
 				flbreak = YES;
@@ -137,8 +132,8 @@ static char encodingTable[64] = {
 			
 			inbuf [ixinbuf++] = ch;
 			
-			if( ixinbuf == 4 )
-			{
+			if ( ixinbuf == 4 )
+			 {
 				ixinbuf = 0;
 				outbuf [0] = ( inbuf[0] << 2 ) | ( ( inbuf[1] & 0x30) >> 4 );
 				outbuf [1] = ( ( inbuf[1] & 0x0F ) << 4 ) | ( ( inbuf[2] & 0x3C ) >> 2 );
@@ -148,7 +143,7 @@ static char encodingTable[64] = {
 					[result appendBytes:&outbuf[i] length:1];
 			}
 			
-			if( flbreak )  break;
+			if ( flbreak )  break;
 		}
 	}
 	
